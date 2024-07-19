@@ -1,0 +1,3 @@
+binaryName: ./sample-operator
+testName: basic call
+testType: ApplyConfiguration

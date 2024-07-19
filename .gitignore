@@ -19,3 +19,5 @@
 
 # Go workspace file
 go.work
+/multi-operator-manager
+/sample-operator
