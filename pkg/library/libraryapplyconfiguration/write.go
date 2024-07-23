@@ -46,7 +46,7 @@ func WriteClusterApplyResult(desiredApplyConfiguration ClusterApplyResult, outpu
 		}
 		verb := filepath.Base(verbDir)
 
-		currResourceList := []Resource{}
+		currResourceList := []*Resource{}
 		var err error
 		switch verb {
 		case "Apply":

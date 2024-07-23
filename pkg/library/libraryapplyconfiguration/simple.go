@@ -3,22 +3,26 @@ package libraryapplyconfiguration
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"os"
+	"path"
 	"path/filepath"
 	"sigs.k8s.io/yaml"
+	"strings"
 )
 
 type ClusterApplyResult interface {
 	GetClusterType() ClusterType
 
-	ToApply() ([]Resource, error)
-	ToApplyStatus() ([]Resource, error)
-	ToCreate() ([]Resource, error)
-	ToUpdate() ([]Resource, error)
-	ToUpdateStatus() ([]Resource, error)
-	ToDelete() ([]Resource, error)
+	ToApply() ([]*Resource, error)
+	ToApplyStatus() ([]*Resource, error)
+	ToCreate() ([]*Resource, error)
+	ToUpdate() ([]*Resource, error)
+	ToUpdateStatus() ([]*Resource, error)
+	ToDelete() ([]*Resource, error)
 }
 
 type ApplyConfiguration struct {
@@ -70,20 +74,81 @@ var (
 type SimpleClusterApplyResult struct {
 	ClusterType ClusterType
 
-	Apply        []Resource
-	ApplyStatus  []Resource
-	Create       []Resource
-	Update       []Resource
-	UpdateStatus []Resource
-	Delete       []Resource
+	Apply        []*Resource
+	ApplyStatus  []*Resource
+	Create       []*Resource
+	Update       []*Resource
+	UpdateStatus []*Resource
+	Delete       []*Resource
 }
 
 type Resource struct {
-	Filename string
-	Content  *unstructured.Unstructured
+	Filename     string
+	ResourceType schema.GroupVersionResource
+	Content      *unstructured.Unstructured
 }
 
-func ResourceFromFile(location string) (*Resource, error) {
+func ResourcesFromDir(location string) ([]*Resource, error) {
+	resources, err := os.ReadDir(location)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read requested dir %q: %w", location, err)
+	}
+
+	currResourceList := []*Resource{}
+	errs := []error{}
+	for _, currFile := range resources {
+		currLocation := filepath.Join(location, currFile.Name())
+		if currFile.IsDir() {
+			errs = append(errs, fmt.Errorf("unexpected directory %q, only json and yaml content is allowed", currLocation))
+			continue
+		}
+		if currFile.Name() == ".gitkeep" {
+			continue
+		}
+		if !strings.HasSuffix(currFile.Name(), ".yaml") && !strings.HasSuffix(currFile.Name(), ".json") {
+			errs = append(errs, fmt.Errorf("unexpected file %q, only json and yaml content is allowed", currLocation))
+		}
+		currResource, err := ResourceFromFile(currLocation, location)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		currResourceList = append(currResourceList, currResource)
+	}
+
+	return currResourceList, errors.Join(errs...)
+}
+
+func LenientResourcesFromDirRecursive(location string) ([]*Resource, error) {
+	currResourceList := []*Resource{}
+	errs := []error{}
+	err := filepath.WalkDir(location, func(currLocation string, currFile fs.DirEntry, err error) error {
+		if err != nil {
+			errs = append(errs, err)
+		}
+
+		if currFile.IsDir() {
+			return nil
+		}
+		if !strings.HasSuffix(currFile.Name(), ".yaml") && !strings.HasSuffix(currFile.Name(), ".json") {
+			return nil
+		}
+		currResource, err := ResourceFromFile(currLocation, location)
+		if err != nil {
+			return fmt.Errorf("error deserializing %q: %w", currLocation, err)
+		}
+		currResourceList = append(currResourceList, currResource)
+
+		return nil
+	})
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	return currResourceList, errors.Join(errs...)
+}
+
+func ResourceFromFile(location, fileTrimPrefix string) (*Resource, error) {
 	content, err := os.ReadFile(location)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read %q: %w", location, err)
@@ -102,36 +167,67 @@ func ResourceFromFile(location string) (*Resource, error) {
 		}
 	}
 
+	retFilename := strings.TrimPrefix(location, fileTrimPrefix)
+	retFilename = strings.TrimPrefix(retFilename, "/")
+
 	return &Resource{
-		Filename: filepath.Base(location),
+		Filename: retFilename,
 		Content:  ret.(*unstructured.Unstructured),
 	}, nil
+}
+
+func IdentifyResource(in *Resource) string {
+	gvkString := fmt.Sprintf("%s.%s.%s/%s[%s]", in.Content.GroupVersionKind().Kind, in.Content.GroupVersionKind().Version, in.Content.GroupVersionKind().Group, in.Content.GetName(), in.Content.GetNamespace())
+
+	return fmt.Sprintf("%s(%s)", gvkString, in.Filename)
+}
+
+func WriteResource(in *Resource, parentDir string) error {
+	if len(in.Filename) == 0 {
+		return fmt.Errorf("%s is missing filename", IdentifyResource(in))
+	}
+
+	dir := path.Join(parentDir, path.Dir(in.Filename))
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("error creating dir for %v: %w", IdentifyResource(in), err)
+	}
+
+	file := path.Join(parentDir, in.Filename)
+	resourceYaml, err := yaml.Marshal(in.Content)
+	if err != nil {
+		return fmt.Errorf("error serializing %v: %w", IdentifyResource(in), err)
+	}
+	if err := os.WriteFile(file, resourceYaml, 0644); err != nil {
+		return fmt.Errorf("error writing %v: %w", IdentifyResource(in), err)
+	}
+
+	return nil
 }
 
 func (s *SimpleClusterApplyResult) GetClusterType() ClusterType {
 	return s.ClusterType
 }
 
-func (s *SimpleClusterApplyResult) ToApply() ([]Resource, error) {
+func (s *SimpleClusterApplyResult) ToApply() ([]*Resource, error) {
 	return s.Apply, nil
 }
 
-func (s *SimpleClusterApplyResult) ToApplyStatus() ([]Resource, error) {
+func (s *SimpleClusterApplyResult) ToApplyStatus() ([]*Resource, error) {
 	return s.ApplyStatus, nil
 }
 
-func (s *SimpleClusterApplyResult) ToCreate() ([]Resource, error) {
+func (s *SimpleClusterApplyResult) ToCreate() ([]*Resource, error) {
 	return s.Create, nil
 }
 
-func (s *SimpleClusterApplyResult) ToUpdate() ([]Resource, error) {
+func (s *SimpleClusterApplyResult) ToUpdate() ([]*Resource, error) {
 	return s.Update, nil
 }
 
-func (s *SimpleClusterApplyResult) ToUpdateStatus() ([]Resource, error) {
+func (s *SimpleClusterApplyResult) ToUpdateStatus() ([]*Resource, error) {
 	return s.UpdateStatus, nil
 }
 
-func (s *SimpleClusterApplyResult) ToDelete() ([]Resource, error) {
+func (s *SimpleClusterApplyResult) ToDelete() ([]*Resource, error) {
 	return s.Delete, nil
 }

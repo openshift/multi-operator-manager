@@ -1,0 +1,47 @@
+configurationResources:
+  exactResources:
+    - group: # should be converted to core
+      version: v1
+      resource: configmaps
+      namespace: kube-system
+      name: kube-apiserver-legacy-service-account-token-tracking
+    - group:
+      version: v1
+      resource: configmaps
+      namespace: kube-system
+      name: not-present # ignore 404
+    - group:
+      version: v1
+      resource: configmaps
+      namespace: kube-system # more than one in the same namespace
+      name: openshift-service-ca.crt
+    - group:
+      version: v1
+      resource: configmaps
+      namespace: openshift-authentication # different namespace
+      name: kube-root-ca.crt
+    - group: fake-group # non-existent group
+      version: v1
+      resource: configmaps
+      namespace: openshift-authentication
+      name: kube-root-ca.crt
+    - group: apps
+      version: v1
+      resource: replicasets # non-existent resource
+      namespace: openshift-authentication
+      name: oauth-openshift
+    - group: apps # different group
+      version: v1
+      resource: deployments
+      namespace: openshift-authentication
+      name: oauth-openshift
+    - group: config.openshift.io
+      version: v1
+      resource: clusteroperators
+      namespace: # cluster scoped
+      name: kube-apiserver # convert from item to list
+    - group: config.openshift.io
+      version: v1
+      resource: dnses
+      name: cluster
+
