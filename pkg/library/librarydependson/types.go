@@ -14,7 +14,7 @@ type ResourceList struct {
 
 	// use resourceReferences when one resource (apiserver.config.openshift.io/cluster) refers to another resource
 	// like a secret (.spec.servingCerts.namedCertificates[*].servingCertificates.name).
-	ResourceReference []ResourceReference `json:"resourceReference"`
+	ResourceReference []ResourceReference `json:"resourceReferences"`
 }
 
 type OperandResourceList struct {
@@ -24,11 +24,8 @@ type OperandResourceList struct {
 }
 
 type ExactResource struct {
-	Group string `json:"group"`
-	// version is very important because it must match the version of serialization that your operator expects.
-	// All Group,Resource tuples must use the same Version.
-	Version   string `json:"version"`
-	Resource  string `json:"resource"`
+	ResourceTypeIdentifier `json:",inline"`
+
 	Namespace string `json:"namespace"`
 	Name      string `json:"name"`
 }
@@ -45,6 +42,8 @@ type ResourceReference struct {
 }
 
 type ExplicitNamespacedReference struct {
+	ResourceTypeIdentifier `json:",inline"`
+
 	// may have multiple matches
 	// TODO CEL may be more appropriate
 	ContainerJSONPath string `json:"containerJSONPath"`
@@ -53,6 +52,8 @@ type ExplicitNamespacedReference struct {
 }
 
 type ImplicitNamespacedReference struct {
+	ResourceTypeIdentifier `json:",inline"`
+
 	Namespace string `json:"namespace"`
 	// may have multiple matches
 	// TODO CEL may be more appropriate
@@ -60,7 +61,17 @@ type ImplicitNamespacedReference struct {
 }
 
 type ClusterScopedReference struct {
+	ResourceTypeIdentifier `json:",inline"`
+
 	// may have multiple matches
 	// TODO CEL may be more appropriate
 	NameJSONPath string `json:"nameJSONPath"`
+}
+
+type ResourceTypeIdentifier struct {
+	Group string `json:"group"`
+	// version is very important because it must match the version of serialization that your operator expects.
+	// All Group,Resource tuples must use the same Version.
+	Version  string `json:"version"`
+	Resource string `json:"resource"`
 }

@@ -1,0 +1,26 @@
+configurationResources:
+  resourceReferences:
+    - referringResource: # single item reference
+        group: config.openshift.io
+        version: v1
+        resource: authentications
+        name: cluster
+      type: ImplicitNamespacedReference
+      implicitNamespacedReference:
+        group: ""
+        version: v1
+        resource: secrets
+        namespace: openshift-config
+        nameJSONPath: .spec.webhookTokenAuthenticator.kubeConfig.name
+    - referringResource: # multi item reference
+        group: config.openshift.io
+        version: v1
+        resource: apiservers
+        name: cluster
+      type: ImplicitNamespacedReference
+      implicitNamespacedReference:
+        group: ""
+        version: v1
+        resource: secrets
+        namespace: openshift-config
+        nameJSONPath: .spec.servingCerts.namedCertificates[*].servingCertificate.name

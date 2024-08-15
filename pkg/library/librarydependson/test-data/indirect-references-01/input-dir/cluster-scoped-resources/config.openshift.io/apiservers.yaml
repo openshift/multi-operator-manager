@@ -1,0 +1,38 @@
+---
+apiVersion: config.openshift.io/v1
+items:
+- apiVersion: config.openshift.io/v1
+  kind: APIServer
+  metadata:
+    annotations:
+      include.release.openshift.io/ibm-cloud-managed: "true"
+      include.release.openshift.io/self-managed-high-availability: "true"
+      oauth-apiserver.openshift.io/secure-token-storage: "true"
+      release.openshift.io/create-only: "true"
+    creationTimestamp: "2024-08-15T05:49:12Z"
+    generation: 1
+    name: cluster
+    ownerReferences:
+    - apiVersion: config.openshift.io/v1
+      kind: ClusterVersion
+      name: version
+      uid: 06c8a3e2-d610-490b-8104-d74284580a43
+    resourceVersion: "966"
+    uid: c90c8501-2ed9-4959-a2df-1a97a97b9e5a
+  spec:
+    audit:
+      profile: Default
+    servingCerts:
+      namedCertificates:
+        - names:
+            - alpha
+          servingCertificate:
+            name: alpha-serving
+        - names:
+            - bravo
+          servingCertificate:
+            name: bravo-serving
+kind: APIServerList
+metadata:
+  continue: ""
+  resourceVersion: "75021"

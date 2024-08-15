@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/util/jsonpath"
 	"net/http"
 	"os"
 	"path"
@@ -73,59 +74,91 @@ func GetRequiredResourcesForResourceList(ctx context.Context, resourceList Resou
 	instances := []*libraryapplyconfiguration.Resource{}
 	errs := []error{}
 
-	for i, currResource := range resourceList.ExactResources {
-		gvr := schema.GroupVersionResource{Group: currResource.Group, Version: currResource.Version, Resource: currResource.Resource}
-		unstructuredInstance, err := dynamicClient.Resource(gvr).Namespace(currResource.Namespace).Get(ctx, currResource.Name, metav1.GetOptions{})
+	for _, currResource := range resourceList.ExactResources {
+		resourceInstance, err := getExactResource(ctx, dynamicClient, currResource)
 		if apierrors.IsNotFound(err) {
 			continue
 		}
 		if err != nil {
-			errs = append(errs, fmt.Errorf("failed reading resource[%d] %#v: %w", i, currResource, err))
+			errs = append(errs, err)
 			continue
-		}
-
-		resourceInstance := &libraryapplyconfiguration.Resource{
-			ResourceType: gvr,
-			Content:      unstructuredInstance,
 		}
 		instances = append(instances, resourceInstance)
 	}
 
-	//for i, currResourceRef := range resourceList.ResourceReference {
-	//	referringGVR := schema.GroupVersionResource{Group: currResourceRef.ReferringResource.Group, Version: currResourceRef.ReferringResource.Version, Resource: currResourceRef.ReferringResource.Resource}
-	//	referringResourceInstance, err := dynamicClient.Resource(referringGVR).Namespace(currResourceRef.ReferringResource.Namespace).Get(ctx, currResourceRef.ReferringResource.Name, metav1.GetOptions{})
-	//	if apierrors.IsNotFound(err) {
-	//		continue
-	//	}
-	//	if err != nil {
-	//		errs = append(errs, fmt.Errorf("failed reading referringResource[%d] %#v: %w", i, currResourceRef.ReferringResource, err))
-	//		continue
-	//	}
-	//
-	//	switch{
-	//	case currResourceRef.ImplicitNamespacedReference != nil:
-	//			name := strings.TrimPrefix(currResourceRef.ImplicitNamespacedReference.NameJSONPath, ".")
-	//			parser := jsonpath.New(name)
-	//			parser.AllowMissingKeys(true)
-	//			err := parser.Parse("{" + sf.JSONPath + "}")
-	//			if err == nil {
-	//				result[i] = selectableField{
-	//					name:      name,
-	//					fieldPath: parser,
-	//				}
-	//			} else {
-	//				result[i] = selectableField{
-	//					name: name,
-	//					err:  err,
-	//				}
-	//			}
-	//		}
-	//
-	//	}
-	//	//instances = append(instances, instance)
-	//}
+	for i, currResourceRef := range resourceList.ResourceReference {
+		refIdentifier := fmt.Sprintf("%d", i)
+		fieldPathEvaluator := jsonpath.New(refIdentifier)
+		fieldPathEvaluator.AllowMissingKeys(true)
+
+		referringGVR := schema.GroupVersionResource{Group: currResourceRef.ReferringResource.Group, Version: currResourceRef.ReferringResource.Version, Resource: currResourceRef.ReferringResource.Resource}
+		referringResourceInstance, err := dynamicClient.Resource(referringGVR).Namespace(currResourceRef.ReferringResource.Namespace).Get(ctx, currResourceRef.ReferringResource.Name, metav1.GetOptions{})
+		if apierrors.IsNotFound(err) {
+			continue
+		}
+		if err != nil {
+			errs = append(errs, fmt.Errorf("failed reading referringResource [%v] %#v: %w", refIdentifier, currResourceRef.ReferringResource, err))
+			continue
+		}
+
+		switch {
+		case currResourceRef.ImplicitNamespacedReference != nil:
+			err := fieldPathEvaluator.Parse("{" + currResourceRef.ImplicitNamespacedReference.NameJSONPath + "}")
+			if err != nil {
+				errs = append(errs, fmt.Errorf("error parsing [%v]: %q: %w", refIdentifier, currResourceRef.ImplicitNamespacedReference.NameJSONPath, err))
+				continue
+			}
+
+			results, err := fieldPathEvaluator.FindResults(referringResourceInstance.UnstructuredContent())
+			if err != nil {
+				errs = append(errs, fmt.Errorf("unexpected error finding value for %v from %v with jsonPath: %w", refIdentifier, "TODO", err))
+				continue
+			}
+
+			for _, currResultSlice := range results {
+				for _, currResult := range currResultSlice {
+					value := currResult.Interface()
+					targetResourceName := fmt.Sprint(value)
+					targetRef := ExactResource{
+						ResourceTypeIdentifier: currResourceRef.ImplicitNamespacedReference.ResourceTypeIdentifier,
+						Namespace:              currResourceRef.ImplicitNamespacedReference.Namespace,
+						Name:                   targetResourceName,
+					}
+
+					resourceInstance, err := getExactResource(ctx, dynamicClient, targetRef)
+					if apierrors.IsNotFound(err) {
+						continue
+					}
+					if err != nil {
+						errs = append(errs, err)
+						continue
+					}
+
+					instances = append(instances, resourceInstance)
+				}
+			}
+		}
+	}
 
 	return instances, errors.Join(errs...)
+}
+
+func getExactResource(ctx context.Context, dynamicClient dynamic.Interface, resourceReference ExactResource) (*libraryapplyconfiguration.Resource, error) {
+	gvr := schema.GroupVersionResource{Group: resourceReference.Group, Version: resourceReference.Version, Resource: resourceReference.Resource}
+	unstructuredInstance, err := dynamicClient.Resource(gvr).Namespace(resourceReference.Namespace).Get(ctx, resourceReference.Name, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed getting %v: %w", IdentifierForExactResourceRef(&resourceReference), err)
+	}
+
+	resourceInstance := &libraryapplyconfiguration.Resource{
+		ResourceType: gvr,
+		Content:      unstructuredInstance,
+	}
+	return resourceInstance, nil
+}
+
+func IdentifierForExactResourceRef(resourceReference *ExactResource) string {
+	return fmt.Sprintf("%s.%s.%s/%s[%s]", resourceReference.Resource, resourceReference.Version, resourceReference.Group, resourceReference.Name, resourceReference.Namespace)
 }
 
 func unstructuredToMustGatherFormat(in []*libraryapplyconfiguration.Resource) ([]*libraryapplyconfiguration.Resource, error) {

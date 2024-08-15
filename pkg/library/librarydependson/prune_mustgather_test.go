@@ -13,7 +13,7 @@ import (
 
 func TestGetRequiredResourcesFromMustGather(t *testing.T) {
 	// this exists to make it easy to generate output for the unit tests
-	writeActualContent := false
+	writeActualContent := true
 
 	content, err := os.ReadDir("test-data")
 	if err != nil {
