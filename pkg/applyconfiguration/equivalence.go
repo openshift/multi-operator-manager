@@ -58,19 +58,19 @@ func EquivalentClusterApplyResult(field string, lhs, rhs libraryapplyconfigurati
 
 }
 
-type desiredResourcesFunc func() ([]libraryapplyconfiguration.Resource, error)
+type desiredResourcesFunc func() ([]*libraryapplyconfiguration.Resource, error)
 
 func equivalentResourceFns(field string, lhs, rhs desiredResourcesFunc) []string {
 	reasons := []string{}
 	lhsDesiredResources, lhsErr := lhs()
 	rhsDesiredResources, rhsErr := rhs()
 	reasons = append(reasons, equivalentErrors(field+".Error", lhsErr, rhsErr)...)
-	reasons = append(reasons, equivalentResources(field, lhsDesiredResources, rhsDesiredResources)...)
+	reasons = append(reasons, EquivalentResources(field, lhsDesiredResources, rhsDesiredResources)...)
 
 	return reasons
 }
 
-func equivalentResources(field string, lhses, rhses []libraryapplyconfiguration.Resource) []string {
+func EquivalentResources(field string, lhses, rhses []*libraryapplyconfiguration.Resource) []string {
 	reasons := []string{}
 
 	for i := range lhses {
@@ -99,10 +99,10 @@ func equivalentResources(field string, lhses, rhses []libraryapplyconfiguration.
 	return reasons
 }
 
-func findResource(in []libraryapplyconfiguration.Resource, filename string) *libraryapplyconfiguration.Resource {
+func findResource(in []*libraryapplyconfiguration.Resource, filename string) *libraryapplyconfiguration.Resource {
 	for _, curr := range in {
 		if curr.Filename == filename {
-			return &curr
+			return curr
 		}
 	}
 

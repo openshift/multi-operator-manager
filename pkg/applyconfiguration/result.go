@@ -3,12 +3,10 @@ package applyconfiguration
 import (
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
-
 	"github.com/deads2k/multi-operator-manager/pkg/library/libraryapplyconfiguration"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"os"
+	"path/filepath"
 )
 
 type ApplyConfigurationResult interface {
@@ -187,30 +185,10 @@ func NewClusterApplyResult(clusterType libraryapplyconfiguration.ClusterType, ou
 	for _, verbDir := range allVerbDirs {
 		verb := filepath.Base(verbDir)
 		allowedClusterTypeSubDirectories.Insert(verb)
-		verbContent, err := os.ReadDir(verbDir)
+
+		currResourceList, err := libraryapplyconfiguration.ResourcesFromDir(verbDir)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("unable to read verb content clusterType=%q verb=%q in %q: %w", clusterType, verb, verbDir, err))
-		}
-
-		currResourceList := []libraryapplyconfiguration.Resource{}
-		for _, currFile := range verbContent {
-			currLocation := filepath.Join(verbDir, currFile.Name())
-			if currFile.IsDir() {
-				errs = append(errs, fmt.Errorf("unexpected directory %q, only json and yaml content is allowed", currLocation))
-				continue
-			}
-			if currFile.Name() == ".gitkeep" {
-				continue
-			}
-			if !strings.HasSuffix(currFile.Name(), ".yaml") && !strings.HasSuffix(currFile.Name(), ".json") {
-				errs = append(errs, fmt.Errorf("unexpected file %q, only json and yaml content is allowed", currLocation))
-			}
-			currResource, err := libraryapplyconfiguration.ResourceFromFile(currLocation)
-			if err != nil {
-				errs = append(errs, err)
-				continue
-			}
-			currResourceList = append(currResourceList, *currResource)
 		}
 		for i, currResource := range currResourceList {
 			currLocation := filepath.Join(verbDir, currResource.Filename)

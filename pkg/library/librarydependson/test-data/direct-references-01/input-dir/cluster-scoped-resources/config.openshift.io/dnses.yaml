@@ -1,0 +1,26 @@
+---
+apiVersion: config.openshift.io/v1
+items:
+- apiVersion: config.openshift.io/v1
+  kind: DNS
+  metadata:
+    creationTimestamp: "2024-08-12T08:31:02Z"
+    generation: 1
+    name: cluster
+    resourceVersion: "520"
+    uid: 56be7321-dada-4ad3-bee6-283680631783
+  spec:
+    baseDomain: ci-op-5bwikw2b-77004.aws-2.ci.openshift.org
+    platform:
+      type: ""
+    privateZone:
+      tags:
+        Name: ci-op-5bwikw2b-77004-8ttct-int
+        kubernetes.io/cluster/ci-op-5bwikw2b-77004-8ttct: owned
+    publicZone:
+      id: Z00287062J1ITQ61DDU2Z
+  status: {}
+kind: DNSList
+metadata:
+  continue: ""
+  resourceVersion: "248953"

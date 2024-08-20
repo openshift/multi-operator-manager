@@ -1,6 +1,7 @@
 package multi_operator_manager
 
 import (
+	create_depends_on "github.com/deads2k/multi-operator-manager/pkg/cmd/multi-operator-manager/create-depends-on"
 	sample_operator "github.com/deads2k/multi-operator-manager/pkg/cmd/multi-operator-manager/sample-operator"
 	"github.com/deads2k/multi-operator-manager/pkg/cmd/multi-operator-manager/test"
 	"github.com/spf13/cobra"
@@ -25,6 +26,7 @@ func NewMultiOperatorManagerCommand(streams genericiooptions.IOStreams) *cobra.C
 	cmd.AddCommand(
 		test.NewTestCommand(streams),
 		sample_operator.NewSampleOperatorCommand(streams),
+		create_depends_on.NewCreateDependsOnCommand(streams),
 	)
 
 	verflag.AddFlags(cmd.Flags())
