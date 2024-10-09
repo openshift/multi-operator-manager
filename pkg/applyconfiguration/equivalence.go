@@ -2,7 +2,7 @@ package applyconfiguration
 
 import (
 	"fmt"
-	"github.com/deads2k/multi-operator-manager/pkg/library/libraryapplyconfiguration"
+	"github.com/openshift/multi-operator-manager/pkg/library/libraryapplyconfiguration"
 	"reflect"
 
 	"github.com/google/go-cmp/cmp"

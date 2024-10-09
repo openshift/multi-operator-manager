@@ -1,14 +1,16 @@
-module github.com/deads2k/multi-operator-manager
+module github.com/openshift/multi-operator-manager
 
 go 1.22.0
 
 require (
 	github.com/google/go-cmp v0.6.0
+	github.com/openshift/build-machinery-go v0.0.0-20240419090851-af9c868bcf52
 	github.com/openshift/library-go v0.0.0-20240723172506-8bb8fe6cc56d
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	k8s.io/apimachinery v0.30.2
 	k8s.io/cli-runtime v0.30.2
+	k8s.io/client-go v0.30.2
 	k8s.io/component-base v0.30.2
 	k8s.io/klog/v2 v2.120.1
 	k8s.io/kubectl v0.30.2
@@ -104,7 +106,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.30.2 // indirect
 	k8s.io/apiserver v0.30.1 // indirect
-	k8s.io/client-go v0.30.2 // indirect
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.29.0 // indirect

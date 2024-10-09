@@ -1,9 +1,9 @@
 package multi_operator_manager
 
 import (
-	create_depends_on "github.com/deads2k/multi-operator-manager/pkg/cmd/multi-operator-manager/create-depends-on"
-	sample_operator "github.com/deads2k/multi-operator-manager/pkg/cmd/multi-operator-manager/sample-operator"
-	"github.com/deads2k/multi-operator-manager/pkg/cmd/multi-operator-manager/test"
+	create_depends_on "github.com/openshift/multi-operator-manager/pkg/cmd/multi-operator-manager/create-depends-on"
+	sample_operator "github.com/openshift/multi-operator-manager/pkg/cmd/multi-operator-manager/sample-operator"
+	"github.com/openshift/multi-operator-manager/pkg/cmd/multi-operator-manager/test"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericiooptions"
 	"k8s.io/component-base/cli/globalflag"

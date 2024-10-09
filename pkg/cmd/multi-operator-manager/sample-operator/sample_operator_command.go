@@ -1,7 +1,7 @@
 package sample_operator
 
 import (
-	applyconfiguration "github.com/deads2k/multi-operator-manager/pkg/cmd/multi-operator-manager/sample-operator/apply-configuration"
+	applyconfiguration "github.com/openshift/multi-operator-manager/pkg/cmd/multi-operator-manager/sample-operator/apply-configuration"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericiooptions"
 )

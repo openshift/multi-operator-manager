@@ -3,7 +3,7 @@ package applyconfiguration
 import (
 	"errors"
 	"fmt"
-	"github.com/deads2k/multi-operator-manager/pkg/library/libraryapplyconfiguration"
+	"github.com/openshift/multi-operator-manager/pkg/library/libraryapplyconfiguration"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"os"
 	"path/filepath"

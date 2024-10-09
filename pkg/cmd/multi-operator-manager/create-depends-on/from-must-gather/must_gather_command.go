@@ -3,7 +3,7 @@ package from_must_gather
 import (
 	"context"
 	"fmt"
-	"github.com/deads2k/multi-operator-manager/pkg/library/librarydependson"
+	"github.com/openshift/multi-operator-manager/pkg/library/librarydependson"
 	"os"
 	"sigs.k8s.io/yaml"
 
