@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/deads2k/multi-operator-manager/pkg/library/libraryapplyconfiguration"
+	"github.com/openshift/multi-operator-manager/pkg/library/libraryapplyconfiguration"
 	"github.com/openshift/library-go/pkg/manifestclient"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

@@ -1,4 +1,4 @@
-module github.com/deads2k/multi-operator-manager
+module github.com/openshift/multi-operator-manager
 
 go 1.22.0
 

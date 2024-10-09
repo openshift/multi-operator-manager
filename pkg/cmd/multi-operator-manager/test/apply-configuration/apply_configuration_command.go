@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/deads2k/multi-operator-manager/pkg/test/testapplyconfiguration"
+	"github.com/openshift/multi-operator-manager/pkg/test/testapplyconfiguration"
 	"io/fs"
 	"path/filepath"
 

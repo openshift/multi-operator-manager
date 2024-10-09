@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	sample_operator "github.com/deads2k/multi-operator-manager/pkg/cmd/multi-operator-manager/sample-operator"
+	sample_operator "github.com/openshift/multi-operator-manager/pkg/cmd/multi-operator-manager/sample-operator"
 	"k8s.io/component-base/cli/globalflag"
 	"k8s.io/component-base/version/verflag"
 	"math/rand"

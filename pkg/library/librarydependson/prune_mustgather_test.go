@@ -2,8 +2,8 @@ package librarydependson
 
 import (
 	"context"
-	"github.com/deads2k/multi-operator-manager/pkg/applyconfiguration"
-	"github.com/deads2k/multi-operator-manager/pkg/library/libraryapplyconfiguration"
+	"github.com/openshift/multi-operator-manager/pkg/applyconfiguration"
+	"github.com/openshift/multi-operator-manager/pkg/library/libraryapplyconfiguration"
 	"os"
 	"path"
 	"sigs.k8s.io/yaml"

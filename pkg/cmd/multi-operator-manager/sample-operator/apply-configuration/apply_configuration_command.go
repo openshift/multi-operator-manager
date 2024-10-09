@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/deads2k/multi-operator-manager/pkg/library/libraryapplyconfiguration"
-	"github.com/deads2k/multi-operator-manager/pkg/sampleoperator/sampleapplyconfiguration"
+	"github.com/openshift/multi-operator-manager/pkg/library/libraryapplyconfiguration"
+	"github.com/openshift/multi-operator-manager/pkg/sampleoperator/sampleapplyconfiguration"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"k8s.io/cli-runtime/pkg/genericiooptions"

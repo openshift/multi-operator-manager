@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/deads2k/multi-operator-manager/pkg/library/libraryapplyconfiguration"
+	"github.com/openshift/multi-operator-manager/pkg/library/libraryapplyconfiguration"
 	"k8s.io/cli-runtime/pkg/genericiooptions"
 )
 

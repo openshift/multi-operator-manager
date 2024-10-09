@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/deads2k/multi-operator-manager/pkg/applyconfiguration"
+	"github.com/openshift/multi-operator-manager/pkg/applyconfiguration"
 	"github.com/openshift/library-go/test/library/junitapi"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"

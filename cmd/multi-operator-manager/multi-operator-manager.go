@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	multi_operator_manager "github.com/deads2k/multi-operator-manager/pkg/cmd/multi-operator-manager"
+	multi_operator_manager "github.com/openshift/multi-operator-manager/pkg/cmd/multi-operator-manager"
 	"github.com/openshift/library-go/pkg/serviceability"
 	"github.com/spf13/pflag"
 	"k8s.io/cli-runtime/pkg/genericiooptions"

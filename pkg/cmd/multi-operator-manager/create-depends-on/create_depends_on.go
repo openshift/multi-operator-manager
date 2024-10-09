@@ -1,7 +1,7 @@
 package create_depends_on
 
 import (
-	from_must_gather "github.com/deads2k/multi-operator-manager/pkg/cmd/multi-operator-manager/create-depends-on/from-must-gather"
+	from_must_gather "github.com/openshift/multi-operator-manager/pkg/cmd/multi-operator-manager/create-depends-on/from-must-gather"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericiooptions"
 )
