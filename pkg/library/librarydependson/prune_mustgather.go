@@ -54,10 +54,7 @@ func GetRequiredResourcesFromMustGather(ctx context.Context, pertinentResources 
 }
 
 func NewDynamicClientFromMustGather(mustGatherDir string) (dynamic.Interface, error) {
-	roundTripper, err := manifestclient.NewRoundTripper(mustGatherDir)
-	if err != nil {
-		return nil, fmt.Errorf("failure reading must-gather for NewDynamicClientFromMustGather: %w", err)
-	}
+	roundTripper := manifestclient.NewRoundTripper(mustGatherDir)
 	httpClient := &http.Client{
 		Transport: roundTripper,
 	}
