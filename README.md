@@ -1,8 +1,7 @@
 Multi-Operator-Manager
 
 # Building
-* `go build github.com/deads2k/multi-operator-manager/cmd/sample-operator`
-* `go build github.com/deads2k/multi-operator-manager/cmd/multi-operator-manager`
+* `make build`
 
 
 # Testing your compatible operator
