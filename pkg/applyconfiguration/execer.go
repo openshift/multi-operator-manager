@@ -4,13 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/openshift/multi-operator-manager/pkg/library/libraryapplyconfiguration"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"os"
 	"os/exec"
 	"path/filepath"
 )
 
-func ApplyConfiguration(ctx context.Context, binaryPath, inputDirectory, outputDirectory string) (ApplyConfigurationResult, error) {
+// ExecApplyConfiguration takes a binaryPath, inputDir, and desiredOutputDir and runs the binary
+// It then reads the result directory and returns the result.
+func ExecApplyConfiguration(ctx context.Context, binaryPath, inputDirectory, outputDirectory string) (libraryapplyconfiguration.ApplyConfigurationResult, error) {
 	// the cmd.Wait() closes these output files.
 	stdoutFilename := filepath.Join(outputDirectory, "stdout.log")
 	stdoutFile, err := os.OpenFile(stdoutFilename, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
@@ -45,12 +48,12 @@ func ApplyConfiguration(ctx context.Context, binaryPath, inputDirectory, outputD
 			if err := stderrFile.Close(); err != nil {
 				utilruntime.HandleError(err)
 			}
-			return NewApplyConfigurationResult(outputDirectory,
+			return libraryapplyconfiguration.NewApplyConfigurationResultFromDirectory(outputDirectory,
 				fmt.Errorf("failed to wait for process %v: %w stderr: %v", cmd, err, string(exitErr.Stderr)))
 		}
-		return NewApplyConfigurationResult(outputDirectory,
+		return libraryapplyconfiguration.NewApplyConfigurationResultFromDirectory(outputDirectory,
 			fmt.Errorf("failed to wait for process: %w", err))
 	}
 
-	return NewApplyConfigurationResult(outputDirectory, nil)
+	return libraryapplyconfiguration.NewApplyConfigurationResultFromDirectory(outputDirectory, nil)
 }

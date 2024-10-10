@@ -197,7 +197,7 @@ github.com/openshift/build-machinery-go/make/targets/golang
 github.com/openshift/build-machinery-go/make/targets/openshift
 github.com/openshift/build-machinery-go/make/targets/openshift/operator
 github.com/openshift/build-machinery-go/scripts
-# github.com/openshift/library-go v0.0.0-20241010160619-0ccd7f5107db
+# github.com/openshift/library-go v0.0.0-20241010221945-bd9dfdd95f7b
 ## explicit; go 1.22.0
 github.com/openshift/library-go/pkg/manifestclient
 github.com/openshift/library-go/pkg/serviceability

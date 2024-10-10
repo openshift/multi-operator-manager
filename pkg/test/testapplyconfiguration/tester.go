@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
+	"github.com/openshift/multi-operator-manager/pkg/applyconfiguration"
+	"github.com/openshift/multi-operator-manager/pkg/library/libraryapplyconfiguration"
 	"os"
 	"path/filepath"
 	"sigs.k8s.io/yaml"
@@ -11,7 +13,6 @@ import (
 	"time"
 
 	"github.com/openshift/library-go/test/library/junitapi"
-	"github.com/openshift/multi-operator-manager/pkg/applyconfiguration"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/cli-runtime/pkg/genericiooptions"
@@ -147,7 +148,7 @@ func (test *TestOptions) runTest(ctx context.Context) *junitapi.JUnitTestCase {
 	}
 
 	inputDir := filepath.Join(test.TestDirectory, "input-dir")
-	actualResult, err := applyconfiguration.ApplyConfiguration(ctx, test.Description.BinaryName, inputDir, test.OutputDirectory)
+	actualResult, err := applyconfiguration.ExecApplyConfiguration(ctx, test.Description.BinaryName, inputDir, test.OutputDirectory)
 	endTime := now()
 	currJunit.Duration = endTime.Sub(startTime).Round(1 * time.Second).Seconds()
 
@@ -174,7 +175,7 @@ func (test *TestOptions) runTest(ctx context.Context) *junitapi.JUnitTestCase {
 	}
 
 	expectedOutputDir := filepath.Join(test.TestDirectory, "expected-output")
-	expectedResult, err := applyconfiguration.NewApplyConfigurationResult(expectedOutputDir, nil)
+	expectedResult, err := libraryapplyconfiguration.NewApplyConfigurationResultFromDirectory(expectedOutputDir, nil)
 	if err != nil {
 		currJunit.FailureOutput = &junitapi.FailureOutput{
 			Message: fmt.Sprintf("failed to read expected output:\n%v\n", err),
@@ -182,7 +183,7 @@ func (test *TestOptions) runTest(ctx context.Context) *junitapi.JUnitTestCase {
 		}
 		return currJunit
 	}
-	differences := applyconfiguration.EquivalentApplyConfigurationResult(expectedResult, actualResult)
+	differences := libraryapplyconfiguration.EquivalentApplyConfigurationResult(expectedResult, actualResult)
 	if len(differences) > 0 {
 		currJunit.FailureOutput = &junitapi.FailureOutput{
 			Message: fmt.Sprintf("expected results mismatch %d times with actual results", len(differences)),

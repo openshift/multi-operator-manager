@@ -2,8 +2,6 @@ package librarydependson
 
 import (
 	"context"
-	"github.com/openshift/multi-operator-manager/pkg/applyconfiguration"
-	"github.com/openshift/multi-operator-manager/pkg/library/libraryapplyconfiguration"
 	"os"
 	"path"
 	"sigs.k8s.io/yaml"
@@ -50,12 +48,12 @@ func TestGetRequiredResourcesFromMustGather(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			expectedPertinentResources, err := libraryapplyconfiguration.LenientResourcesFromDirRecursive(expectedDirPath)
+			expectedPertinentResources, err := LenientResourcesFromDirRecursive(expectedDirPath)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			differences := applyconfiguration.EquivalentResources("pruned", expectedPertinentResources, actualPertinentResources)
+			differences := EquivalentResources("pruned", expectedPertinentResources, actualPertinentResources)
 			if len(differences) > 0 {
 				t.Log(strings.Join(differences, "\n"))
 				t.Errorf("expected results mismatch %d times with actual results", len(differences))
