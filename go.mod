@@ -5,7 +5,7 @@ go 1.22.0
 require (
 	github.com/google/go-cmp v0.6.0
 	github.com/openshift/build-machinery-go v0.0.0-20240613134303-8359781da660
-	github.com/openshift/library-go v0.0.0-20241010160619-0ccd7f5107db
+	github.com/openshift/library-go v0.0.0-20241010221945-bd9dfdd95f7b
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	k8s.io/apimachinery v0.31.1

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/openshift/library-go/pkg/manifestclient"
-	"github.com/openshift/multi-operator-manager/pkg/library/libraryapplyconfiguration"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -31,7 +30,7 @@ func WriteRequiredResourcesFromMustGather(ctx context.Context, pertinentResource
 
 	errs := []error{}
 	for _, currResource := range actualResources {
-		if err := libraryapplyconfiguration.WriteResource(currResource, targetDir); err != nil {
+		if err := WriteResource(currResource, targetDir); err != nil {
 			errs = append(errs, err)
 		}
 	}
@@ -39,7 +38,7 @@ func WriteRequiredResourcesFromMustGather(ctx context.Context, pertinentResource
 	return errors.Join(errs...)
 }
 
-func GetRequiredResourcesFromMustGather(ctx context.Context, pertinentResources *PertinentResources, mustGatherDir string) ([]*libraryapplyconfiguration.Resource, error) {
+func GetRequiredResourcesFromMustGather(ctx context.Context, pertinentResources *PertinentResources, mustGatherDir string) ([]*Resource, error) {
 	dynamicClient, err := NewDynamicClientFromMustGather(mustGatherDir)
 	if err != nil {
 		return nil, err
@@ -67,8 +66,8 @@ func NewDynamicClientFromMustGather(mustGatherDir string) (dynamic.Interface, er
 	return dynamicClient, nil
 }
 
-func GetRequiredResourcesForResourceList(ctx context.Context, resourceList ResourceList, dynamicClient dynamic.Interface) ([]*libraryapplyconfiguration.Resource, error) {
-	instances := []*libraryapplyconfiguration.Resource{}
+func GetRequiredResourcesForResourceList(ctx context.Context, resourceList ResourceList, dynamicClient dynamic.Interface) ([]*Resource, error) {
+	instances := []*Resource{}
 	errs := []error{}
 
 	for _, currResource := range resourceList.ExactResources {
@@ -140,14 +139,14 @@ func GetRequiredResourcesForResourceList(ctx context.Context, resourceList Resou
 	return instances, errors.Join(errs...)
 }
 
-func getExactResource(ctx context.Context, dynamicClient dynamic.Interface, resourceReference ExactResource) (*libraryapplyconfiguration.Resource, error) {
+func getExactResource(ctx context.Context, dynamicClient dynamic.Interface, resourceReference ExactResource) (*Resource, error) {
 	gvr := schema.GroupVersionResource{Group: resourceReference.Group, Version: resourceReference.Version, Resource: resourceReference.Resource}
 	unstructuredInstance, err := dynamicClient.Resource(gvr).Namespace(resourceReference.Namespace).Get(ctx, resourceReference.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed getting %v: %w", IdentifierForExactResourceRef(&resourceReference), err)
 	}
 
-	resourceInstance := &libraryapplyconfiguration.Resource{
+	resourceInstance := &Resource{
 		ResourceType: gvr,
 		Content:      unstructuredInstance,
 	}
@@ -158,7 +157,7 @@ func IdentifierForExactResourceRef(resourceReference *ExactResource) string {
 	return fmt.Sprintf("%s.%s.%s/%s[%s]", resourceReference.Resource, resourceReference.Version, resourceReference.Group, resourceReference.Name, resourceReference.Namespace)
 }
 
-func unstructuredToMustGatherFormat(in []*libraryapplyconfiguration.Resource) ([]*libraryapplyconfiguration.Resource, error) {
+func unstructuredToMustGatherFormat(in []*Resource) ([]*Resource, error) {
 	type mustGatherKeyType struct {
 		gk        schema.GroupKind
 		namespace string
@@ -205,7 +204,7 @@ func unstructuredToMustGatherFormat(in []*libraryapplyconfiguration.Resource) ([
 		return nil, errors.Join(errs...)
 	}
 
-	ret := []*libraryapplyconfiguration.Resource{}
+	ret := []*Resource{}
 	for mustGatherKey, list := range byGroupKind {
 		namespacedString := "REPLACE_ME"
 		if len(mustGatherKey.namespace) > 0 {
@@ -220,7 +219,7 @@ func unstructuredToMustGatherFormat(in []*libraryapplyconfiguration.Resource) ([
 		}
 		listAsUnstructured := &unstructured.Unstructured{Object: list.UnstructuredContent()}
 		resourceType := groupKindToResource[mustGatherKey.gk]
-		ret = append(ret, &libraryapplyconfiguration.Resource{
+		ret = append(ret, &Resource{
 			Filename: path.Join(namespacedString, mustGatherKey.namespace, groupString, fmt.Sprintf("%s.yaml", resourceType.Resource)),
 			Content:  listAsUnstructured,
 		})

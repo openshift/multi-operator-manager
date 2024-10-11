@@ -2,25 +2,11 @@ package sampleapplyconfiguration
 
 import (
 	"context"
-	"time"
-
 	"github.com/openshift/multi-operator-manager/pkg/library/libraryapplyconfiguration"
-	"k8s.io/cli-runtime/pkg/genericiooptions"
 )
 
-func SampleRunApplyConfiguration(ctx context.Context, inputDirectory string, now time.Time, streams genericiooptions.IOStreams) (*libraryapplyconfiguration.ApplyConfiguration, error) {
-	// TODO wire up the must-gather reading client
-	ret := &libraryapplyconfiguration.ApplyConfiguration{
-		DesiredConfigurationCluster: &libraryapplyconfiguration.SimpleClusterApplyResult{
-			ClusterType: libraryapplyconfiguration.ClusterTypeConfiguration,
-		},
-		DesiredManagementCluster: &libraryapplyconfiguration.SimpleClusterApplyResult{
-			ClusterType: libraryapplyconfiguration.ClusterTypeManagement,
-		},
-		DesiredUserWorkloadCluster: &libraryapplyconfiguration.SimpleClusterApplyResult{
-			ClusterType: libraryapplyconfiguration.ClusterTypeUserWorkload,
-		},
-	}
-
-	return ret, nil
+func SampleRunApplyConfiguration(ctx context.Context, input libraryapplyconfiguration.ApplyConfigurationInput) (libraryapplyconfiguration.AllDesiredMutationsGetter, error) {
+	// TODO initialize dynamic clients, informers, operator clients, and kubeclients from the input to demonstrate.
+	
+	return libraryapplyconfiguration.NewApplyConfigurationFromClient(input.MutationTrackingClient.GetMutations()), nil
 }
