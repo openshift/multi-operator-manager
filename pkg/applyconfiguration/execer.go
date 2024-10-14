@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 )
 
 // ExecApplyConfiguration takes a binaryPath, inputDir, and desiredOutputDir and runs the binary
@@ -32,7 +33,11 @@ func ExecApplyConfiguration(ctx context.Context, binaryPath, inputDirectory, out
 		"--output-dir", outputDirectory,
 	}
 
-	cmd := exec.CommandContext(ctx, binaryPath, args...)
+	// TODO prove that the timeout works if the process captures sig-int
+	processCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(processCtx, binaryPath, args...)
 	cmd.Stdout = stdoutFile
 	cmd.Stderr = stderrFile
 	if err := cmd.Start(); err != nil {
