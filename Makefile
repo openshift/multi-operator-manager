@@ -41,3 +41,8 @@ test-e2e:
 	hack/e2e.sh
 
 .PHONY: test-e2e
+
+test-operator-integration: build
+	hack/test-operator-integration.sh
+
+.PHONY: test-operator-integration

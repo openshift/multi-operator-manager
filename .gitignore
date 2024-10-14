@@ -21,3 +21,4 @@
 go.work
 /multi-operator-manager
 /sample-operator
+/test-output/
