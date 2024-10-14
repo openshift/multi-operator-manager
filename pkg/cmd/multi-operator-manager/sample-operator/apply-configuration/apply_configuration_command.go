@@ -8,5 +8,5 @@ import (
 )
 
 func NewSampleOperatorApplyConfigurationCommand(streams genericiooptions.IOStreams) *cobra.Command {
-	return libraryapplyconfiguration.NewSampleOperatorApplyConfigurationCommand(sampleapplyconfiguration.SampleRunApplyConfiguration, streams)
+	return libraryapplyconfiguration.NewApplyConfigurationCommand(sampleapplyconfiguration.SampleRunApplyConfiguration, streams)
 }
