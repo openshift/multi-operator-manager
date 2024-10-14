@@ -9,6 +9,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"k8s.io/cli-runtime/pkg/genericiooptions"
+	"k8s.io/utils/clock"
+	clocktesting "k8s.io/utils/clock/testing"
 )
 
 // ApplyConfigurationInput is provided to the ApplyConfigurationFunc
@@ -19,8 +21,7 @@ type ApplyConfigurationInput struct {
 
 	// Now is the declared time that this function was called at.  It doesn't necessarily bear any relationship to
 	// the actual time.  This is another aspect that makes unit and integration testing easier.
-	// Callees will usually feed this into a k8s.io/utils/clock.PassiveClock
-	Now time.Time
+	Clock clock.Clock
 
 	// Streams is for I/O.  The StdIn will usually be nil'd out.
 	Streams genericiooptions.IOStreams
@@ -29,7 +30,7 @@ type ApplyConfigurationInput struct {
 // ApplyConfigurationFunc is a function called for applying configuration.
 type ApplyConfigurationFunc func(ctx context.Context, applyConfigurationInput ApplyConfigurationInput) (AllDesiredMutationsGetter, error)
 
-func NewSampleOperatorApplyConfigurationCommand(applyConfigurationFn ApplyConfigurationFunc, streams genericiooptions.IOStreams) *cobra.Command {
+func NewApplyConfigurationCommand(applyConfigurationFn ApplyConfigurationFunc, streams genericiooptions.IOStreams) *cobra.Command {
 	return newSampleOperatorApplyConfigurationCommand(applyConfigurationFn, streams)
 }
 
@@ -105,7 +106,7 @@ func (f *sampleOperatorApplyConfigurationFlags) ToOptions(ctx context.Context) (
 	momClient := manifestclient.NewHTTPClient(f.inputDirectory)
 	input := ApplyConfigurationInput{
 		MutationTrackingClient: momClient,
-		Now:                    time.Now(), // TODO fix to be an arg
+		Clock:                  clocktesting.NewFakeClock(time.Now()), // TODO fix to be an arg
 		Streams:                f.streams,
 	}
 
