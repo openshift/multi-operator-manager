@@ -5,9 +5,9 @@ Multi-Operator-Manager
 
 
 # Testing your compatible operator
-`./multi-operator-manager test apply-configuration --test-dir=./test-data/apply-configuration/ --output-dir=../test-output --preserve-policy=KeepAlways`
+`./multi-operator-manager test apply-configuration --test-dir=./test-data/apply-configuration/ --output-dir=./test-output --preserve-policy=KeepAlways`
 
-The `../test-output` directory will be created and a `junit.xml` inside will summarize the results.
+The `./test-output` directory will be created and a `junit.xml` inside will summarize the results.
 
 ## Defining a test
 An example is contained in `test-data`.
@@ -15,6 +15,9 @@ You can organize your tests however you wish, but every directory with a `test.y
 an `input-dir` and an `expected-output` dir.
 
 TODO probably allow missing to mean no output.  It's painful otherwise.
+
+## Testing this repo
+`make test-operator-integration` will run the `sample-operator` against the local test data here.
 
 ### test.yaml
 This repo contains examples, but to test your operator the operator binary name must be present.

@@ -3,6 +3,7 @@ package libraryapplyconfiguration
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	"github.com/openshift/library-go/pkg/manifestclient"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -59,7 +60,7 @@ func WriteApplyConfiguration(desiredApplyConfiguration AllDesiredMutationsGetter
 
 	for _, clusterType := range sets.List(AllClusterTypes) {
 		desiredMutations := desiredApplyConfiguration.MutationsForClusterType(clusterType)
-		err := manifestclient.WriteMutationDirectory(outputDirectory, desiredMutations.Requests().AllRequests()...)
+		err := manifestclient.WriteMutationDirectory(filepath.Join(outputDirectory, string(clusterType)), desiredMutations.Requests().AllRequests()...)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("failed writing requests for %q: %w", clusterType, err))
 		}

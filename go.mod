@@ -4,16 +4,20 @@ go 1.22.0
 
 require (
 	github.com/google/go-cmp v0.6.0
+	github.com/openshift/api v0.0.0-20241001152557-e415140e5d5f
 	github.com/openshift/build-machinery-go v0.0.0-20240613134303-8359781da660
-	github.com/openshift/library-go v0.0.0-20241010221945-bd9dfdd95f7b
+	github.com/openshift/client-go v0.0.0-20241001162912-da6d55e4611f
+	github.com/openshift/library-go v0.0.0-20241016162852-a9bf3fe3cd0a
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
+	k8s.io/api v0.31.1
 	k8s.io/apimachinery v0.31.1
 	k8s.io/cli-runtime v0.30.2
 	k8s.io/client-go v0.31.1
 	k8s.io/component-base v0.31.1
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/kubectl v0.30.2
+	k8s.io/utils v0.0.0-20240921022957-49e7df575cb6
 	sigs.k8s.io/yaml v1.4.0
 )
 
@@ -31,6 +35,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
+	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
 	github.com/felixge/fgprof v0.9.4 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
@@ -70,6 +75,7 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
+	github.com/robfig/cron v1.2.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/stoewer/go-strcase v1.2.0 // indirect
@@ -105,11 +111,12 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.31.1 // indirect
+	k8s.io/apiextensions-apiserver v0.31.1 // indirect
 	k8s.io/apiserver v0.31.1 // indirect
+	k8s.io/kube-aggregator v0.31.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
-	k8s.io/utils v0.0.0-20240921022957-49e7df575cb6 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.30.3 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
+	sigs.k8s.io/kube-storage-version-migrator v0.0.6-0.20230721195810-5c8923c5ff96 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 )
