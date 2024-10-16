@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
-	"github.com/openshift/multi-operator-manager/pkg/applyconfiguration"
-	"github.com/openshift/multi-operator-manager/pkg/library/libraryapplyconfiguration"
 	"os"
 	"path/filepath"
 	"sigs.k8s.io/yaml"
@@ -13,6 +11,8 @@ import (
 	"time"
 
 	"github.com/openshift/library-go/test/library/junitapi"
+	"github.com/openshift/multi-operator-manager/pkg/applyconfiguration"
+	"github.com/openshift/multi-operator-manager/pkg/library/libraryapplyconfiguration"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/cli-runtime/pkg/genericiooptions"
@@ -91,7 +91,7 @@ func (o *TestApplyConfigurationOptions) Run(ctx context.Context) error {
 		})
 	}
 
-	failedTests := sets.Set[string]{}
+	failedTestsToOutput := map[string]string{}
 	for _, test := range o.Tests {
 		if ctx.Err() != nil {
 			// break the loop and report as much as we can.
@@ -100,8 +100,11 @@ func (o *TestApplyConfigurationOptions) Run(ctx context.Context) error {
 		currJunit := test.runTest(ctx)
 		junit.TestCases = append(junit.TestCases, currJunit)
 		if currJunit.FailureOutput != nil {
-			failedTests.Insert(currJunit.Name)
-
+			failedTestsToOutput[currJunit.Name] = fmt.Sprintf(
+				"\t%s\n\t\t%s",
+				strings.ReplaceAll(currJunit.FailureOutput.Message, "\n", "\n\t"),
+				strings.ReplaceAll(currJunit.FailureOutput.Output, "\n", "\n\t\t"),
+			)
 		} else {
 			// if we succeeded, we might need to cleanup the output
 			if len(o.PreservePolicy) == 0 {
@@ -120,9 +123,15 @@ func (o *TestApplyConfigurationOptions) Run(ctx context.Context) error {
 		return err
 	}
 
-	if len(failedTests) > 0 {
-		fmt.Fprintf(o.Streams.ErrOut, "%d tests failed:\n%v\n", len(failedTests), strings.Join(sets.List(failedTests), "\n"))
-		return fmt.Errorf("%d tests failed", len(failedTests))
+	if len(failedTestsToOutput) > 0 {
+		fmt.Fprintf(o.Streams.ErrOut, "%d tests failed:\n", len(failedTestsToOutput))
+		for _, testName := range sets.List(sets.KeySet(failedTestsToOutput)) {
+			output := failedTestsToOutput[testName]
+			fmt.Fprintf(o.Streams.ErrOut, "test: %s\n", testName)
+			fmt.Fprintf(o.Streams.ErrOut, "%s\n\n", output)
+
+		}
+		return fmt.Errorf("%d tests failed", len(failedTestsToOutput))
 	}
 	if ctx.Err() != nil {
 		fmt.Fprintf(o.Streams.ErrOut, "failing due to cancellation (possibly timeout): %v", ctx.Err())
