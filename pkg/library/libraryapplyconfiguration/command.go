@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/openshift/library-go/pkg/manifestclient"
+	"github.com/openshift/multi-operator-manager/pkg/flagtypes"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"k8s.io/cli-runtime/pkg/genericiooptions"
@@ -31,10 +32,10 @@ type ApplyConfigurationInput struct {
 type ApplyConfigurationFunc func(ctx context.Context, applyConfigurationInput ApplyConfigurationInput) (AllDesiredMutationsGetter, error)
 
 func NewApplyConfigurationCommand(applyConfigurationFn ApplyConfigurationFunc, streams genericiooptions.IOStreams) *cobra.Command {
-	return newSampleOperatorApplyConfigurationCommand(applyConfigurationFn, streams)
+	return newApplyConfigurationCommand(applyConfigurationFn, streams)
 }
 
-type sampleOperatorApplyConfigurationFlags struct {
+type applyConfigurationFlags struct {
 	applyConfigurationFn ApplyConfigurationFunc
 
 	// InputDirectory is a directory that contains the must-gather formatted inputs
@@ -43,28 +44,31 @@ type sampleOperatorApplyConfigurationFlags struct {
 	// OutputDirectory is the directory to where output should be stored
 	outputDirectory string
 
+	now time.Time
+
 	streams genericiooptions.IOStreams
 }
 
-func newSampleOperatorApplyConfigurationFlags(streams genericiooptions.IOStreams) *sampleOperatorApplyConfigurationFlags {
-	return &sampleOperatorApplyConfigurationFlags{
+func newApplyConfigurationFlags(streams genericiooptions.IOStreams) *applyConfigurationFlags {
+	return &applyConfigurationFlags{
+		now:     time.Now(),
 		streams: streams,
 	}
 }
 
-func newSampleOperatorApplyConfigurationCommand(applyConfigurationFn ApplyConfigurationFunc, streams genericiooptions.IOStreams) *cobra.Command {
-	f := newSampleOperatorApplyConfigurationFlags(streams)
+func newApplyConfigurationCommand(applyConfigurationFn ApplyConfigurationFunc, streams genericiooptions.IOStreams) *cobra.Command {
+	f := newApplyConfigurationFlags(streams)
 	f.applyConfigurationFn = applyConfigurationFn
 
 	cmd := &cobra.Command{
 		Use:   "apply-configuration",
-		Short: "Sample operator the apply-configuration command.",
+		Short: "Operator apply-configuration command.",
 
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Fprintf(f.streams.ErrOut, "stderr output here\n")
-			fmt.Fprintf(f.streams.Out, "stdout output here\n")
+			fmt.Fprintf(f.streams.ErrOut, "TODO output version\n")
+			fmt.Fprintf(f.streams.Out, "TODO output version\n")
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
@@ -87,26 +91,31 @@ func newSampleOperatorApplyConfigurationCommand(applyConfigurationFn ApplyConfig
 	return cmd
 }
 
-func (f *sampleOperatorApplyConfigurationFlags) BindFlags(flags *pflag.FlagSet) {
+func (f *applyConfigurationFlags) BindFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&f.inputDirectory, "input-dir", f.inputDirectory, "The directory where the resource input is stored.")
 	flags.StringVar(&f.outputDirectory, "output-dir", f.outputDirectory, "The directory where the output is stored.")
+	nowFlag := flagtypes.NewTimeValue(f.now, &f.now, []string{time.RFC3339})
+	flags.Var(nowFlag, "now", "The time to use time.Now during this execution.")
 }
 
-func (f *sampleOperatorApplyConfigurationFlags) Validate() error {
+func (f *applyConfigurationFlags) Validate() error {
 	if len(f.inputDirectory) == 0 {
 		return fmt.Errorf("--input-dir is required")
 	}
 	if len(f.outputDirectory) == 0 {
 		return fmt.Errorf("--output-dir is required")
 	}
+	if f.now.IsZero() {
+		return fmt.Errorf("--now is required")
+	}
 	return nil
 }
 
-func (f *sampleOperatorApplyConfigurationFlags) ToOptions(ctx context.Context) (*applyConfigurationOptions, error) {
+func (f *applyConfigurationFlags) ToOptions(ctx context.Context) (*applyConfigurationOptions, error) {
 	momClient := manifestclient.NewHTTPClient(f.inputDirectory)
 	input := ApplyConfigurationInput{
 		MutationTrackingClient: momClient,
-		Clock:                  clocktesting.NewFakeClock(time.Now()), // TODO fix to be an arg
+		Clock:                  clocktesting.NewFakeClock(f.now),
 		Streams:                f.streams,
 	}
 

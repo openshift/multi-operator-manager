@@ -157,7 +157,12 @@ func (test *TestOptions) runTest(ctx context.Context) *junitapi.JUnitTestCase {
 	}
 
 	inputDir := filepath.Join(test.TestDirectory, "input-dir")
-	actualResult, err := applyconfiguration.ExecApplyConfiguration(ctx, test.Description.BinaryName, inputDir, test.OutputDirectory)
+	args := applyconfiguration.ApplyConfigurationFlagValues{
+		InputDirectory:  inputDir,
+		OutputDirectory: test.OutputDirectory,
+		Now:             test.Description.Now.Time,
+	}
+	actualResult, err := applyconfiguration.ExecApplyConfiguration(ctx, test.Description.BinaryName, args)
 	endTime := now()
 	currJunit.Duration = endTime.Sub(startTime).Round(1 * time.Second).Seconds()
 
