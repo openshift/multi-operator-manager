@@ -30,8 +30,13 @@ var (
 )
 
 func (a SimpleOperatorStarter) RunOnce(ctx context.Context) error {
-	if err := a.startInformers(ctx); err != nil {
-		return err
+	for _, informer := range a.Informers {
+		informer.Start(ctx)
+	}
+	// wait for sync so that when RunOnce is called the listers will be ready.
+	// TODO add timeout
+	for _, informer := range a.Informers {
+		informer.WaitForCacheSync(ctx)
 	}
 
 	errs := []error{}
@@ -44,21 +49,11 @@ func (a SimpleOperatorStarter) RunOnce(ctx context.Context) error {
 	return errors.Join(errs...)
 }
 
-func (a SimpleOperatorStarter) startInformers(ctx context.Context) error {
+func (a SimpleOperatorStarter) Start(ctx context.Context) error {
 	for _, informer := range a.Informers {
 		informer.Start(ctx)
 	}
-	// TODO add timeout
-	for _, informer := range a.Informers {
-		informer.WaitForCacheSync(ctx)
-	}
-	return nil
-}
 
-func (a SimpleOperatorStarter) Start(ctx context.Context) error {
-	if err := a.startInformers(ctx); err != nil {
-		return err
-	}
 	for _, controllerRunFn := range a.ControllerRunFns {
 		go controllerRunFn(ctx)
 	}
