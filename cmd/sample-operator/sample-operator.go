@@ -2,9 +2,6 @@ package main
 
 import (
 	"fmt"
-	sample_operator "github.com/openshift/multi-operator-manager/pkg/cmd/multi-operator-manager/sample-operator"
-	"k8s.io/component-base/cli/globalflag"
-	"k8s.io/component-base/version/verflag"
 	"math/rand"
 	"os"
 	"time"
@@ -13,8 +10,12 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/cli-runtime/pkg/genericiooptions"
 	utilflag "k8s.io/component-base/cli/flag"
+	"k8s.io/component-base/cli/globalflag"
 	"k8s.io/component-base/logs"
+	"k8s.io/component-base/version/verflag"
 	_ "k8s.io/klog/v2"
+
+	sample_operator "github.com/openshift/multi-operator-manager/pkg/cmd/multi-operator-manager/sample-operator"
 )
 
 func main() {
