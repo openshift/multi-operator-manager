@@ -9,6 +9,8 @@ type ProducedResources struct {
 type ResourceList struct {
 	ExactResources []ExactResource `json:"exactResources"`
 
+	GeneratedNameResources []GeneratedNameResource `json:"generatedNameResource"`
+
 	// TODO I bet this covers 95% of what we need, but maybe we need label selector.
 	// I'm a solid -1 on "pattern" based selection. We select in kube based on label selectors.
 }
@@ -16,8 +18,15 @@ type ResourceList struct {
 type ExactResource struct {
 	ResourceTypeIdentifier `json:",inline"`
 
-	Namespace string `json:"namespace"`
+	Namespace string `json:"namespace,omitempty"`
 	Name      string `json:"name"`
+}
+
+type GeneratedNameResource struct {
+	ResourceTypeIdentifier `json:",inline"`
+
+	Namespace     string `json:"namespace,omitempty"`
+	GeneratedName string `json:"name"`
 }
 
 type ResourceTypeIdentifier struct {
