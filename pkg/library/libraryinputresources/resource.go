@@ -1,4 +1,4 @@
-package librarydependson
+package libraryinputresources
 
 import (
 	"errors"

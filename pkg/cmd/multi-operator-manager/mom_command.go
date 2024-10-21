@@ -1,7 +1,7 @@
 package multi_operator_manager
 
 import (
-	create_depends_on "github.com/openshift/multi-operator-manager/pkg/cmd/multi-operator-manager/create-depends-on"
+	create_input_resources "github.com/openshift/multi-operator-manager/pkg/cmd/multi-operator-manager/create-input-resources"
 	sample_operator "github.com/openshift/multi-operator-manager/pkg/cmd/multi-operator-manager/sample-operator"
 	"github.com/openshift/multi-operator-manager/pkg/cmd/multi-operator-manager/test"
 	"github.com/spf13/cobra"
@@ -26,7 +26,7 @@ func NewMultiOperatorManagerCommand(streams genericiooptions.IOStreams) *cobra.C
 	cmd.AddCommand(
 		test.NewTestCommand(streams),
 		sample_operator.NewSampleOperatorCommand(streams),
-		create_depends_on.NewCreateDependsOnCommand(streams),
+		create_input_resources.NewCreateInputResourcesCommand(streams),
 	)
 
 	verflag.AddFlags(cmd.Flags())
