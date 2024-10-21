@@ -29,6 +29,7 @@ $(call build-image,multi-operator-manager,$(IMAGE_REGISTRY)/ocp/4.18:multi-opera
 
 clean:
 	$(RM) multi-operator-manager
+	$(RM) -rf test-output
 .PHONY: clean
 
 GO_TEST_PACKAGES :=./pkg/... ./cmd/...

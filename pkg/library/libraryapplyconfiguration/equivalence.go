@@ -3,7 +3,6 @@ package libraryapplyconfiguration
 import (
 	"bytes"
 	"fmt"
-
 	"github.com/google/go-cmp/cmp"
 	"github.com/openshift/library-go/pkg/manifestclient"
 	"k8s.io/apimachinery/pkg/util/sets"

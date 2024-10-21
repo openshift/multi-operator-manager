@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	configv1 "github.com/openshift/api/config/v1"
 	operatorv1 "github.com/openshift/api/operator/v1"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	applyoperatorv1 "github.com/openshift/client-go/operator/applyconfigurations/operator/v1"
@@ -155,6 +156,13 @@ func CreateOperatorStarter(ctx context.Context, exampleOperatorInput *exampleOpe
 	)
 	ret.ControllerRunFns = append(ret.ControllerRunFns, libraryapplyconfiguration.AdaptRunFn(resourceSyncer.Run))
 	ret.ControllerRunOnceFns = append(ret.ControllerRunOnceFns, libraryapplyconfiguration.AdaptSyncFn(exampleOperatorInput.eventRecorder, resourceSyncer.Sync))
+
+	// the good example was above, now just add a few resources for us to play with
+
+	ret.ControllerRunOnceFns = append(ret.ControllerRunOnceFns, func(ctx context.Context) error {
+		exampleOperatorInput.configClient.ConfigV1().Ingresses().Create(ctx, &configv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: "cluster"}}, metav1.CreateOptions{})
+		return nil
+	})
 
 	return ret, nil
 }
