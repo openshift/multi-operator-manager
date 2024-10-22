@@ -1,4 +1,4 @@
-package librarydependson
+package libraryinputresources
 
 import (
 	"context"
@@ -18,8 +18,8 @@ import (
 	"path"
 )
 
-func WriteRequiredResourcesFromMustGather(ctx context.Context, pertinentResources *PertinentResources, mustGatherDir, targetDir string) error {
-	actualResources, err := GetRequiredResourcesFromMustGather(ctx, pertinentResources, mustGatherDir)
+func WriteRequiredInputResourcesFromMustGather(ctx context.Context, inputResources *InputResources, mustGatherDir, targetDir string) error {
+	actualResources, err := GetRequiredInputResourcesFromMustGather(ctx, inputResources, mustGatherDir)
 	if err != nil {
 		return err
 	}
@@ -38,13 +38,13 @@ func WriteRequiredResourcesFromMustGather(ctx context.Context, pertinentResource
 	return errors.Join(errs...)
 }
 
-func GetRequiredResourcesFromMustGather(ctx context.Context, pertinentResources *PertinentResources, mustGatherDir string) ([]*Resource, error) {
+func GetRequiredInputResourcesFromMustGather(ctx context.Context, inputResources *InputResources, mustGatherDir string) ([]*Resource, error) {
 	dynamicClient, err := NewDynamicClientFromMustGather(mustGatherDir)
 	if err != nil {
 		return nil, err
 	}
 
-	pertinentUnstructureds, err := GetRequiredResourcesForResourceList(ctx, pertinentResources.ConfigurationResources, dynamicClient)
+	pertinentUnstructureds, err := GetRequiredInputResourcesForResourceList(ctx, inputResources.ApplyConfigurationResources, dynamicClient)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func NewDynamicClientFromMustGather(mustGatherDir string) (dynamic.Interface, er
 	return dynamicClient, nil
 }
 
-func GetRequiredResourcesForResourceList(ctx context.Context, resourceList ResourceList, dynamicClient dynamic.Interface) ([]*Resource, error) {
+func GetRequiredInputResourcesForResourceList(ctx context.Context, resourceList ResourceList, dynamicClient dynamic.Interface) ([]*Resource, error) {
 	instances := []*Resource{}
 	errs := []error{}
 
@@ -116,9 +116,9 @@ func GetRequiredResourcesForResourceList(ctx context.Context, resourceList Resou
 					value := currResult.Interface()
 					targetResourceName := fmt.Sprint(value)
 					targetRef := ExactResource{
-						ResourceTypeIdentifier: currResourceRef.ImplicitNamespacedReference.ResourceTypeIdentifier,
-						Namespace:              currResourceRef.ImplicitNamespacedReference.Namespace,
-						Name:                   targetResourceName,
+						DependsOnResourceTypeIdentifier: currResourceRef.ImplicitNamespacedReference.DependsOnResourceTypeIdentifier,
+						Namespace:                       currResourceRef.ImplicitNamespacedReference.Namespace,
+						Name:                            targetResourceName,
 					}
 
 					resourceInstance, err := getExactResource(ctx, dynamicClient, targetRef)

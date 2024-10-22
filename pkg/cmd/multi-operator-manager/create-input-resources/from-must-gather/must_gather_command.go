@@ -3,7 +3,7 @@ package from_must_gather
 import (
 	"context"
 	"fmt"
-	"github.com/openshift/multi-operator-manager/pkg/library/librarydependson"
+	"github.com/openshift/multi-operator-manager/pkg/library/libraryinputresources"
 	"os"
 	"sigs.k8s.io/yaml"
 
@@ -12,26 +12,26 @@ import (
 	"k8s.io/cli-runtime/pkg/genericiooptions"
 )
 
-type TestApplyConfigurationFlags struct {
+type FromMustGatherFlags struct {
 	MustGatherDirectory string
 
 	// OutputDirectory is the directory to where output should be stored
 	OutputDirectory string
 
-	PertinentResourcesFile string
-	OperatorBinary         string
+	InputResourcesFile string
+	OperatorBinary     string
 
 	Streams genericiooptions.IOStreams
 }
 
-func NewCreateDependsOnFromMustGatherFlags(streams genericiooptions.IOStreams) *TestApplyConfigurationFlags {
-	return &TestApplyConfigurationFlags{
+func NewCreateInputResourcesFromMustGatherFlags(streams genericiooptions.IOStreams) *FromMustGatherFlags {
+	return &FromMustGatherFlags{
 		Streams: streams,
 	}
 }
 
-func NewCreateDependsOnFromMustGatherCommand(streams genericiooptions.IOStreams) *cobra.Command {
-	f := NewCreateDependsOnFromMustGatherFlags(streams)
+func NewCreateInputResourcesFromMustGatherCommand(streams genericiooptions.IOStreams) *cobra.Command {
+	f := NewCreateInputResourcesFromMustGatherFlags(streams)
 
 	cmd := &cobra.Command{
 		Use:   "from-must-gather",
@@ -58,14 +58,14 @@ func NewCreateDependsOnFromMustGatherCommand(streams genericiooptions.IOStreams)
 	return cmd
 }
 
-func (f *TestApplyConfigurationFlags) BindFlags(flags *pflag.FlagSet) {
+func (f *FromMustGatherFlags) BindFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&f.MustGatherDirectory, "must-gather-dir", f.MustGatherDirectory, "The directory where must-gather output is located.")
 	flags.StringVar(&f.OutputDirectory, "output-dir", f.OutputDirectory, "The directory where the output is stored.")
-	flags.StringVar(&f.PertinentResourcesFile, "pertinent-resources", f.PertinentResourcesFile, "The file where pertinent resources are stored.")
+	flags.StringVar(&f.InputResourcesFile, "input-resources", f.InputResourcesFile, "The file where pertinent resources are stored.")
 	flags.StringVar(&f.OperatorBinary, "operator-binary", f.OperatorBinary, "Path to the operator binary to call <operator-binary> depends-on.")
 }
 
-func (f *TestApplyConfigurationFlags) Validate() error {
+func (f *FromMustGatherFlags) Validate() error {
 	if len(f.MustGatherDirectory) == 0 {
 		return fmt.Errorf("--must-gather-dir is required")
 	}
@@ -73,26 +73,26 @@ func (f *TestApplyConfigurationFlags) Validate() error {
 		return fmt.Errorf("--output-dir is required")
 	}
 	switch {
-	case len(f.PertinentResourcesFile) == 0 && len(f.OperatorBinary) == 0:
+	case len(f.InputResourcesFile) == 0 && len(f.OperatorBinary) == 0:
 		return fmt.Errorf("exactly one of --pertinent-resources and --operator-binary is required")
-	case len(f.PertinentResourcesFile) == 0 && len(f.OperatorBinary) != 0:
+	case len(f.InputResourcesFile) == 0 && len(f.OperatorBinary) != 0:
 		return fmt.Errorf("not yet wired through")
-	case len(f.PertinentResourcesFile) != 0 && len(f.OperatorBinary) == 0:
-	case len(f.PertinentResourcesFile) != 0 && len(f.OperatorBinary) != 0:
+	case len(f.InputResourcesFile) != 0 && len(f.OperatorBinary) == 0:
+	case len(f.InputResourcesFile) != 0 && len(f.OperatorBinary) != 0:
 		return fmt.Errorf("exactly one of --pertinent-resources and --operator-binary is required")
 	}
 	return nil
 }
 
-func (f *TestApplyConfigurationFlags) Run(ctx context.Context) error {
-	pertinentResourcesBytes, err := os.ReadFile(f.PertinentResourcesFile)
+func (f *FromMustGatherFlags) Run(ctx context.Context) error {
+	pertinentResourcesBytes, err := os.ReadFile(f.InputResourcesFile)
 	if err != nil {
-		return fmt.Errorf("unable to read pertinent resources %q: %w", f.PertinentResourcesFile, err)
+		return fmt.Errorf("unable to read pertinent resources %q: %w", f.InputResourcesFile, err)
 	}
-	pertinentResources := &librarydependson.PertinentResources{}
+	pertinentResources := &libraryinputresources.InputResources{}
 	if err := yaml.Unmarshal(pertinentResourcesBytes, &pertinentResources); err != nil {
-		return fmt.Errorf("unable to parse pertinent resources %q: %w", f.PertinentResourcesFile, err)
+		return fmt.Errorf("unable to parse pertinent resources %q: %w", f.InputResourcesFile, err)
 	}
 
-	return librarydependson.WriteRequiredResourcesFromMustGather(ctx, pertinentResources, f.MustGatherDirectory, f.OutputDirectory)
+	return libraryinputresources.WriteRequiredInputResourcesFromMustGather(ctx, pertinentResources, f.MustGatherDirectory, f.OutputDirectory)
 }

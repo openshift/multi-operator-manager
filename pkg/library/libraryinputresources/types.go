@@ -1,9 +1,11 @@
-package librarydependson
+package libraryinputresources
 
-type PertinentResources struct {
-	// configurationResources is the list of resources that describe how to configure the operand.
-	// on hypershift, these will always be on the management cluster only
-	ConfigurationResources ResourceList `json:"configurationResources"`
+// InputResources contains the items that an operator needs to make a decision about what needs to be create,
+// modified, or removed.
+type InputResources struct {
+	// applyConfigurationResources are the list of resources used as input to the apply-configuration command.
+	// It is the responsibility of the MOM to determine where the inputs come from.
+	ApplyConfigurationResources ResourceList `json:"applyConfigurationResources"`
 
 	// operandResources is the list of resources that are important for determining check-health
 	OperandResources OperandResourceList `json:"operandResources"`
@@ -18,13 +20,13 @@ type ResourceList struct {
 }
 
 type OperandResourceList struct {
-	ConfigurationServerResources ResourceList `json:"configurationServerResources"`
-	ManagementServerResources    ResourceList `json:"managementServerResources"`
-	GuestServerResources         ResourceList `json:"guestServerResources"`
+	ConfigurationResources ResourceList `json:"configurationResources"`
+	ManagementResources    ResourceList `json:"managementResources"`
+	UserWorkloadResources  ResourceList `json:"userWorkloadResources"`
 }
 
 type ExactResource struct {
-	ResourceTypeIdentifier `json:",inline"`
+	DependsOnResourceTypeIdentifier `json:",inline"`
 
 	Namespace string `json:"namespace"`
 	Name      string `json:"name"`
@@ -42,7 +44,7 @@ type ResourceReference struct {
 }
 
 type ExplicitNamespacedReference struct {
-	ResourceTypeIdentifier `json:",inline"`
+	DependsOnResourceTypeIdentifier `json:",inline"`
 
 	// may have multiple matches
 	// TODO CEL may be more appropriate
@@ -52,7 +54,7 @@ type ExplicitNamespacedReference struct {
 }
 
 type ImplicitNamespacedReference struct {
-	ResourceTypeIdentifier `json:",inline"`
+	DependsOnResourceTypeIdentifier `json:",inline"`
 
 	Namespace string `json:"namespace"`
 	// may have multiple matches
@@ -61,14 +63,14 @@ type ImplicitNamespacedReference struct {
 }
 
 type ClusterScopedReference struct {
-	ResourceTypeIdentifier `json:",inline"`
+	DependsOnResourceTypeIdentifier `json:",inline"`
 
 	// may have multiple matches
 	// TODO CEL may be more appropriate
 	NameJSONPath string `json:"nameJSONPath"`
 }
 
-type ResourceTypeIdentifier struct {
+type DependsOnResourceTypeIdentifier struct {
 	Group string `json:"group"`
 	// version is very important because it must match the version of serialization that your operator expects.
 	// All Group,Resource tuples must use the same Version.

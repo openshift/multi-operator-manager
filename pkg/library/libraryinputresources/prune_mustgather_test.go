@@ -1,4 +1,4 @@
-package librarydependson
+package libraryinputresources
 
 import (
 	"context"
@@ -27,7 +27,7 @@ func TestGetRequiredResourcesFromMustGather(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			pertinentResources := &PertinentResources{}
+			pertinentResources := &InputResources{}
 			if err := yaml.Unmarshal(pertinentResourcesBytes, &pertinentResources); err != nil {
 				t.Fatal(err)
 			}
@@ -36,14 +36,14 @@ func TestGetRequiredResourcesFromMustGather(t *testing.T) {
 			expectedDirPath := path.Join("test-data", currTestDir.Name(), "expected-output")
 
 			if writeActualContent {
-				err = WriteRequiredResourcesFromMustGather(ctx, pertinentResources, mustGatherDirPath, expectedDirPath)
+				err = WriteRequiredInputResourcesFromMustGather(ctx, pertinentResources, mustGatherDirPath, expectedDirPath)
 				if err != nil {
 					t.Fatal(err)
 				}
 				return
 			}
 
-			actualPertinentResources, err := GetRequiredResourcesFromMustGather(ctx, pertinentResources, mustGatherDirPath)
+			actualPertinentResources, err := GetRequiredInputResourcesFromMustGather(ctx, pertinentResources, mustGatherDirPath)
 			if err != nil {
 				t.Fatal(err)
 			}
