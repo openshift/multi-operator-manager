@@ -1,0 +1,14 @@
+applyConfigurationResources:
+  resourceReferences:
+    - implicitNamespacedReference:
+        group: ""
+        nameJSONPath: $.spec.componentRoutes[?(@.name == "my-route" && @.namespace == "openshift-authentication")].servingCertKeyPairSecret.name
+        namespace: openshift-config
+        resource: secrets
+        version: v1
+      referringResource:
+        group: config.openshift.io
+        name: cluster
+        resource: ingresses
+        version: v1
+      type: ImplicitNamespacedReference

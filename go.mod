@@ -3,6 +3,8 @@ module github.com/openshift/multi-operator-manager
 go 1.22.0
 
 require (
+	github.com/PaesslerAG/gval v1.2.3
+	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/google/go-cmp v0.6.0
 	github.com/openshift/api v0.0.0-20241001152557-e415140e5d5f
 	github.com/openshift/build-machinery-go v0.0.0-20240613134303-8359781da660
@@ -77,6 +79,7 @@ require (
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/robfig/cron v1.2.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/stoewer/go-strcase v1.2.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect

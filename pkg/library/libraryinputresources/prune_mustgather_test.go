@@ -11,7 +11,7 @@ import (
 
 func TestGetRequiredResourcesFromMustGather(t *testing.T) {
 	// this exists to make it easy to generate output for the unit tests
-	writeActualContent := true
+	writeActualContent := false
 
 	content, err := os.ReadDir("test-data")
 	if err != nil {
@@ -22,7 +22,7 @@ func TestGetRequiredResourcesFromMustGather(t *testing.T) {
 		ctx := context.Background()
 		testName := currTestDir.Name()
 		t.Run(testName, func(t *testing.T) {
-			testPertinentResources := path.Join("test-data", currTestDir.Name(), "pertinent-resources.yaml")
+			testPertinentResources := path.Join("test-data", currTestDir.Name(), "input-resources.yaml")
 			pertinentResourcesBytes, err := os.ReadFile(testPertinentResources)
 			if err != nil {
 				t.Fatal(err)

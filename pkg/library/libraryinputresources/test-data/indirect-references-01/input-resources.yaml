@@ -1,4 +1,4 @@
-configurationResources:
+applyConfigurationResources:
   resourceReferences:
     - referringResource: # single item reference
         group: config.openshift.io
@@ -11,7 +11,7 @@ configurationResources:
         version: v1
         resource: secrets
         namespace: openshift-config
-        nameJSONPath: .spec.webhookTokenAuthenticator.kubeConfig.name
+        nameJSONPath: $.spec.webhookTokenAuthenticator.kubeConfig.name
     - referringResource: # multi item reference
         group: config.openshift.io
         version: v1
@@ -23,4 +23,4 @@ configurationResources:
         version: v1
         resource: secrets
         namespace: openshift-config
-        nameJSONPath: .spec.servingCerts.namedCertificates[*].servingCertificate.name
+        nameJSONPath: $.spec.servingCerts.namedCertificates[*].servingCertificate.name

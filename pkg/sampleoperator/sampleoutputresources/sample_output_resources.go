@@ -10,7 +10,7 @@ func SampleRunOutputResources(ctx context.Context) (*libraryoutputresources.Outp
 	return &libraryoutputresources.OutputResources{
 		ConfigurationResources: libraryoutputresources.ResourceList{},
 		ManagementResources: libraryoutputresources.ResourceList{
-			ExactResources: []libraryoutputresources.ExactResource{
+			ExactResources: []libraryoutputresources.ExactResourceID{
 				{
 					OutputResourceTypeIdentifier: libraryoutputresources.OutputResourceTypeIdentifier{
 						Group:    "config.openshift.io",
@@ -22,7 +22,7 @@ func SampleRunOutputResources(ctx context.Context) (*libraryoutputresources.Outp
 			},
 		},
 		UserWorkloadResources: libraryoutputresources.ResourceList{
-			ExactResources: []libraryoutputresources.ExactResource{
+			ExactResources: []libraryoutputresources.ExactResourceID{
 				{
 					OutputResourceTypeIdentifier: libraryoutputresources.OutputResourceTypeIdentifier{
 						Group:    "oauth.openshift.io",
