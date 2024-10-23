@@ -32,7 +32,7 @@ func SampleRunInputResources(ctx context.Context) (*libraryinputresources.InputR
 			ConfigurationResources: libraryinputresources.ResourceList{},
 			ManagementResources: libraryinputresources.ResourceList{
 				ExactResources: []libraryinputresources.ExactResourceID{
-					libraryinputresources.ExactDeployments("openshift-authentication", "oauth-server"),
+					libraryinputresources.ExactDeployment("openshift-authentication", "oauth-server"),
 				},
 			},
 			UserWorkloadResources: libraryinputresources.ResourceList{},
