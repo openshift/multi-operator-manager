@@ -1,4 +1,4 @@
-configurationResources:
+applyConfigurationResources:
   exactResources:
     - group: # should be converted to core
       version: v1

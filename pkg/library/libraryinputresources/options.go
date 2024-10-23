@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/cli-runtime/pkg/genericiooptions"
-	"k8s.io/client-go/util/jsonpath"
 	"sigs.k8s.io/yaml"
 )
 
@@ -123,9 +123,8 @@ func validateImplicitNamespaceReference(path *field.Path, obj *ImplicitNamespace
 		errs = append(errs, field.Required(path.Child("namespace"), "must be present"))
 	}
 
-	fieldPathEvaluator := jsonpath.New(path.String())
-	fieldPathEvaluator.AllowMissingKeys(true)
-	if err := fieldPathEvaluator.Parse("{" + obj.NameJSONPath + "}"); err != nil {
+	_, err := builder.NewEvaluable(obj.NameJSONPath)
+	if err != nil {
 		errs = append(errs, field.Invalid(path.Child("nameJSONPath"), obj.NameJSONPath, err.Error()))
 	}
 

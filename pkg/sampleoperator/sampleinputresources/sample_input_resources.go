@@ -23,7 +23,7 @@ func SampleRunInputResources(ctx context.Context) (*libraryinputresources.InputR
 					ImplicitNamespacedReference: &libraryinputresources.ImplicitNamespacedReference{
 						InputResourceTypeIdentifier: libraryinputresources.SecretIdentifierType(),
 						Namespace:                   "openshift-config",
-						NameJSONPath:                `.spec.componentRoutes[?(@.name == "my-route" && @.namespace == "openshift-authentication")].servingCertKeyPairSecret.name`,
+						NameJSONPath:                `$.spec.componentRoutes[?(@.name == "my-route" && @.namespace == "openshift-authentication")].servingCertKeyPairSecret.name`,
 					},
 				},
 			},

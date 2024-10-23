@@ -4,18 +4,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"os"
+	"path"
+
+	"github.com/PaesslerAG/gval"
+	"github.com/PaesslerAG/jsonpath"
 	"github.com/openshift/library-go/pkg/manifestclient"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/util/jsonpath"
-	"net/http"
-	"os"
-	"path"
 )
 
 func WriteRequiredInputResourcesFromMustGather(ctx context.Context, inputResources *InputResources, mustGatherDir, targetDir string) error {
@@ -66,6 +69,8 @@ func NewDynamicClientFromMustGather(mustGatherDir string) (dynamic.Interface, er
 	return dynamicClient, nil
 }
 
+var builder = gval.Full(jsonpath.Language())
+
 func GetRequiredInputResourcesForResourceList(ctx context.Context, resourceList ResourceList, dynamicClient dynamic.Interface) ([]*Resource, error) {
 	instances := []*Resource{}
 	errs := []error{}
@@ -82,10 +87,9 @@ func GetRequiredInputResourcesForResourceList(ctx context.Context, resourceList 
 		instances = append(instances, resourceInstance)
 	}
 
+	path := field.NewPath(".")
 	for i, currResourceRef := range resourceList.ResourceReference {
-		refIdentifier := fmt.Sprintf("%d", i)
-		fieldPathEvaluator := jsonpath.New(refIdentifier)
-		fieldPathEvaluator.AllowMissingKeys(true)
+		currFieldPath := path.Child("resourceReference").Index(i)
 
 		referringGVR := schema.GroupVersionResource{Group: currResourceRef.ReferringResource.Group, Version: currResourceRef.ReferringResource.Version, Resource: currResourceRef.ReferringResource.Resource}
 		referringResourceInstance, err := dynamicClient.Resource(referringGVR).Namespace(currResourceRef.ReferringResource.Namespace).Get(ctx, currResourceRef.ReferringResource.Name, metav1.GetOptions{})
@@ -93,45 +97,55 @@ func GetRequiredInputResourcesForResourceList(ctx context.Context, resourceList 
 			continue
 		}
 		if err != nil {
-			errs = append(errs, fmt.Errorf("failed reading referringResource [%v] %#v: %w", refIdentifier, currResourceRef.ReferringResource, err))
+			errs = append(errs, fmt.Errorf("failed reading referringResource [%v] %#v: %w", currFieldPath, currResourceRef.ReferringResource, err))
 			continue
 		}
 
 		switch {
 		case currResourceRef.ImplicitNamespacedReference != nil:
-			err := fieldPathEvaluator.Parse("{" + currResourceRef.ImplicitNamespacedReference.NameJSONPath + "}")
+			fieldPathEvaluator, err := builder.NewEvaluable(currResourceRef.ImplicitNamespacedReference.NameJSONPath)
 			if err != nil {
-				errs = append(errs, fmt.Errorf("error parsing [%v]: %q: %w", refIdentifier, currResourceRef.ImplicitNamespacedReference.NameJSONPath, err))
+				errs = append(errs, fmt.Errorf("error parsing [%v]: %q: %w", currFieldPath, currResourceRef.ImplicitNamespacedReference.NameJSONPath, err))
 				continue
 			}
 
-			results, err := fieldPathEvaluator.FindResults(referringResourceInstance.UnstructuredContent())
+			results, err := fieldPathEvaluator(ctx, referringResourceInstance.UnstructuredContent())
 			if err != nil {
-				errs = append(errs, fmt.Errorf("unexpected error finding value for %v from %v with jsonPath: %w", refIdentifier, "TODO", err))
+				errs = append(errs, fmt.Errorf("unexpected error finding value for %v from %v with jsonPath: %w", currFieldPath, "TODO", err))
 				continue
 			}
 
-			for _, currResultSlice := range results {
-				for _, currResult := range currResultSlice {
-					value := currResult.Interface()
-					targetResourceName := fmt.Sprint(value)
-					targetRef := ExactResourceID{
-						InputResourceTypeIdentifier: currResourceRef.ImplicitNamespacedReference.InputResourceTypeIdentifier,
-						Namespace:                   currResourceRef.ImplicitNamespacedReference.Namespace,
-						Name:                        targetResourceName,
-					}
-
-					resourceInstance, err := getExactResource(ctx, dynamicClient, targetRef)
-					if apierrors.IsNotFound(err) {
-						continue
-					}
-					if err != nil {
-						errs = append(errs, err)
-						continue
-					}
-
-					instances = append(instances, resourceInstance)
+			var resultStrings []string
+			switch cast := results.(type) {
+			case string:
+				resultStrings = []string{cast}
+			case []string:
+				resultStrings = cast
+			case []interface{}:
+				for _, curr := range cast {
+					resultStrings = append(resultStrings, fmt.Sprintf("%v", curr))
 				}
+			default:
+				errs = append(errs, fmt.Errorf("[%v] unexpected error type %T for %#v", currFieldPath, results, results))
+			}
+
+			for _, targetResourceName := range resultStrings {
+				targetRef := ExactResourceID{
+					InputResourceTypeIdentifier: currResourceRef.ImplicitNamespacedReference.InputResourceTypeIdentifier,
+					Namespace:                   currResourceRef.ImplicitNamespacedReference.Namespace,
+					Name:                        targetResourceName,
+				}
+
+				resourceInstance, err := getExactResource(ctx, dynamicClient, targetRef)
+				if apierrors.IsNotFound(err) {
+					continue
+				}
+				if err != nil {
+					errs = append(errs, err)
+					continue
+				}
+
+				instances = append(instances, resourceInstance)
 			}
 		}
 	}

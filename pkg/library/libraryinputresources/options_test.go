@@ -68,8 +68,32 @@ func Test_validateInputResources(t *testing.T) {
 			},
 			want: []string{
 				`operandResources.configurationResources.resourceReferences[0].referringResource.version: Required value: must be present`,
-				`operandResources.configurationResources.resourceReferences[0].implicitNamespacedReference.nameJSONPath: Invalid value: "please DON'T compile[AND foo]": invalid array index AND foo`,
+				`operandResources.configurationResources.resourceReferences[0].implicitNamespacedReference.nameJSONPath: Invalid value: "please DON'T compile[AND foo]": parsing error: please DON'T compile[AND foo]	:1:8 - 1:11 unexpected Ident while scanning operator`,
 			},
+		},
+		{
+			name: "good jsonpath",
+			args: args{
+				obj: &InputResources{
+					ApplyConfigurationResources: ResourceList{},
+					OperandResources: OperandResourceList{
+						ConfigurationResources: ResourceList{
+							ResourceReference: []ResourceReference{
+								{
+									ReferringResource: ExactSecret("foo", "bar"),
+									Type:              ImplicitNamespacedReferenceType,
+									ImplicitNamespacedReference: &ImplicitNamespacedReference{
+										InputResourceTypeIdentifier: SecretIdentifierType(),
+										Namespace:                   "openshift-config",
+										NameJSONPath:                `$.spec.componentRoutes[?(@.name == "my-route" && @.namespace == "openshift-authentication")].servingCertKeyPairSecret.name`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: []string{},
 		},
 	}
 	for _, tt := range tests {
@@ -80,7 +104,7 @@ func Test_validateInputResources(t *testing.T) {
 				actualStrings = append(actualStrings, curr.Error())
 			}
 			if !reflect.DeepEqual(actualStrings, tt.want) {
-				t.Errorf("validateInputResources() = %v, want %v", actualStrings, tt.want)
+				t.Errorf("validateInputResources() = %v", actualStrings)
 			}
 		})
 	}
