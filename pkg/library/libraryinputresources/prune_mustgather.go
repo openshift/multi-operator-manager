@@ -115,10 +115,10 @@ func GetRequiredInputResourcesForResourceList(ctx context.Context, resourceList 
 				for _, currResult := range currResultSlice {
 					value := currResult.Interface()
 					targetResourceName := fmt.Sprint(value)
-					targetRef := ExactResource{
-						DependsOnResourceTypeIdentifier: currResourceRef.ImplicitNamespacedReference.DependsOnResourceTypeIdentifier,
-						Namespace:                       currResourceRef.ImplicitNamespacedReference.Namespace,
-						Name:                            targetResourceName,
+					targetRef := ExactResourceID{
+						InputResourceTypeIdentifier: currResourceRef.ImplicitNamespacedReference.InputResourceTypeIdentifier,
+						Namespace:                   currResourceRef.ImplicitNamespacedReference.Namespace,
+						Name:                        targetResourceName,
 					}
 
 					resourceInstance, err := getExactResource(ctx, dynamicClient, targetRef)
@@ -139,7 +139,7 @@ func GetRequiredInputResourcesForResourceList(ctx context.Context, resourceList 
 	return instances, errors.Join(errs...)
 }
 
-func getExactResource(ctx context.Context, dynamicClient dynamic.Interface, resourceReference ExactResource) (*Resource, error) {
+func getExactResource(ctx context.Context, dynamicClient dynamic.Interface, resourceReference ExactResourceID) (*Resource, error) {
 	gvr := schema.GroupVersionResource{Group: resourceReference.Group, Version: resourceReference.Version, Resource: resourceReference.Resource}
 	unstructuredInstance, err := dynamicClient.Resource(gvr).Namespace(resourceReference.Namespace).Get(ctx, resourceReference.Name, metav1.GetOptions{})
 	if err != nil {
@@ -153,7 +153,7 @@ func getExactResource(ctx context.Context, dynamicClient dynamic.Interface, reso
 	return resourceInstance, nil
 }
 
-func IdentifierForExactResourceRef(resourceReference *ExactResource) string {
+func IdentifierForExactResourceRef(resourceReference *ExactResourceID) string {
 	return fmt.Sprintf("%s.%s.%s/%s[%s]", resourceReference.Resource, resourceReference.Version, resourceReference.Group, resourceReference.Name, resourceReference.Namespace)
 }
 
