@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/openshift/multi-operator-manager/pkg/test/testapplyconfiguration"
 	"io/fs"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -103,6 +105,12 @@ func (f *TestApplyConfigurationFlags) ToOptions(ctx context.Context) (*testapply
 		if currTest == nil {
 			return nil
 		}
+		if validationErrs := validateTest(field.NewPath(path), currTest); len(validationErrs) > 0 {
+			for _, currErr := range validationErrs {
+				errs = append(errs, fmt.Errorf("%q: %q: %w", path, currTest.Description.TestName, currErr))
+			}
+			return nil
+		}
 
 		outputDir := f.OutputDirectory
 		if currentPathRelativeToInitialPath, err := filepath.Rel(f.TestDirectory, path); err == nil {
@@ -126,4 +134,20 @@ func (f *TestApplyConfigurationFlags) ToOptions(ctx context.Context) (*testapply
 		OutputDirectory: f.OutputDirectory,
 		Streams:         f.Streams,
 	}, nil
+}
+
+func validateTest(path *field.Path, testOptions *testapplyconfiguration.TestOptions) []error {
+	errs := []error{}
+
+	if len(testOptions.Description.TestName) == 0 {
+		errs = append(errs, field.Required(path.Child("testName"), "must be present"))
+	}
+	if len(testOptions.Description.Description) == 0 {
+		errs = append(errs, field.Required(path.Child("description"), "must be present"))
+	}
+	if !testapplyconfiguration.AllTestTypes.Has(testOptions.Description.TestType) {
+		errs = append(errs, field.NotSupported(path.Child("testType"), testOptions.Description.TestType, sets.List(testapplyconfiguration.AllTestTypes)))
+	}
+
+	return errs
 }
