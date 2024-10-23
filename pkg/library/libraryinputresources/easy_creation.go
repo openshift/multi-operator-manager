@@ -28,16 +28,20 @@ func ExactServiceAccount(namespace, name string) ExactResourceID {
 	return ExactResource("", "v1", "serviceaccounts", namespace, name)
 }
 
-func ExactDeployments(namespace, name string) ExactResourceID {
+func ExactDeployment(namespace, name string) ExactResourceID {
 	return ExactResource("apps", "v1", "deployments", namespace, name)
 }
 
-func ExactDaemonSets(namespace, name string) ExactResourceID {
+func ExactDaemonSet(namespace, name string) ExactResourceID {
 	return ExactResource("apps", "v1", "daemonsets", namespace, name)
 }
 
 func ExactClusterOperator(name string) ExactResourceID {
 	return ExactResource("config.openshift.io", "v1", "clusteroperators", "", name)
+}
+
+func ExactLowLevelOperator(resource string) ExactResourceID {
+	return ExactResource("operator.openshift.io", "v1", resource, "", "cluster")
 }
 
 func ExactClusterRole(name string) ExactResourceID {
