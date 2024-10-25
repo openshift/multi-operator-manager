@@ -15,6 +15,7 @@ func SampleRunInputResources(ctx context.Context) (*libraryinputresources.InputR
 				libraryinputresources.ExactConfigResource("proxies"),
 				libraryinputresources.ExactConfigResource("consoles"),
 				libraryinputresources.ExactConfigResource("oauths"),
+				libraryinputresources.ExactConfigMap("openshift-authentication", "fail-check"),
 			},
 			ResourceReference: []libraryinputresources.ResourceReference{
 				{
@@ -32,7 +33,7 @@ func SampleRunInputResources(ctx context.Context) (*libraryinputresources.InputR
 			ConfigurationResources: libraryinputresources.ResourceList{},
 			ManagementResources: libraryinputresources.ResourceList{
 				ExactResources: []libraryinputresources.ExactResourceID{
-					libraryinputresources.ExactDeployments("openshift-authentication", "oauth-server"),
+					libraryinputresources.ExactDeployment("openshift-authentication", "oauth-server"),
 				},
 			},
 			UserWorkloadResources: libraryinputresources.ResourceList{},

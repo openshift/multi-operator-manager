@@ -4,3 +4,4 @@ description: >
   Test something simple.
 testType: ApplyConfiguration
 now: 2024-10-14T22:38:20Z
+desiredError: NonZeroReturn

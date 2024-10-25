@@ -3,8 +3,10 @@ package testapplyconfiguration
 import (
 	"context"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sigs.k8s.io/yaml"
 	"strings"
@@ -162,38 +164,82 @@ func (test *TestOptions) runTest(ctx context.Context) *junitapi.JUnitTestCase {
 		OutputDirectory: test.OutputDirectory,
 		Now:             test.Description.Now.Time,
 	}
-	actualResult, err := applyconfiguration.ExecApplyConfiguration(ctx, test.Description.BinaryName, args)
+	actualResult, execErr := applyconfiguration.ExecApplyConfiguration(ctx, test.Description.BinaryName, args)
 	endTime := now()
 	currJunit.Duration = endTime.Sub(startTime).Round(1 * time.Second).Seconds()
 
 	switch {
-	case err == nil && actualResult != nil:
+	case execErr == nil && actualResult != nil:
 		// this was successful
-	case err == nil && actualResult == nil:
+		if test.Description.DesiredError == NonZeroReturn {
+			currJunit.FailureOutput = &junitapi.FailureOutput{
+				Message: "test requires non-zero exit code from apply-configuration",
+				Output:  "test requires non-zero exit code from apply-configuration",
+			}
+			// fall out of the switch/case so we check the output too for friendliness
+		}
+
+	case execErr == nil && actualResult == nil:
 		currJunit.FailureOutput = &junitapi.FailureOutput{
 			Message: "No result or error from apply-configuration",
 			Output:  "No result or error from apply-configuration",
 		}
 		return currJunit
 
-	case err != nil && actualResult != nil:
+	case execErr != nil && actualResult != nil:
 		currJunit.SystemOut = actualResult.Stdout()
 		currJunit.SystemErr = actualResult.Stderr()
-		fallthrough
-	case err != nil && actualResult == nil:
+
+		// if we aren't expecting non-zero returns, mark the test case to fail, but continue to check the output
+		if test.Description.DesiredError != NonZeroReturn {
+			currJunit.FailureOutput = &junitapi.FailureOutput{
+				Message: fmt.Sprintf("%v\n%v", execErr, currJunit.SystemErr),
+				Output:  fmt.Sprintf("ERROR:%v\n\nSTDERR:\n%s\n\nSTDOUT:\n:%s\n", execErr, currJunit.SystemErr, currJunit.SystemOut),
+			}
+		}
+
+		// if the failure isn't an exit code failure, then fail straight away
+		var exitErr *exec.ExitError
+		if !errors.As(execErr, &exitErr) {
+			currJunit.FailureOutput = &junitapi.FailureOutput{
+				Message: fmt.Sprintf("%v\n%v", execErr, currJunit.SystemErr),
+				Output:  fmt.Sprintf("ERROR:%v\n\nSTDERR:\n%s\n\nSTDOUT:\n:%s\n", execErr, currJunit.SystemErr, currJunit.SystemOut),
+			}
+			return currJunit
+		}
+		// if the failure is an exit code failure, continue to test the output.
+		// TODO Perhaps we require some kind stderr matching?
+
+	case execErr != nil && actualResult == nil:
+		// if we aren't expecting non-zero returns, then fail
+		if test.Description.DesiredError != NonZeroReturn {
+			currJunit.FailureOutput = &junitapi.FailureOutput{
+				Message: fmt.Sprintf("%v\n%v", execErr, currJunit.SystemErr),
+				Output:  fmt.Sprintf("ERROR:%v\n\nSTDERR:\n%s\n\nSTDOUT:\n:%s\n", execErr, currJunit.SystemErr, currJunit.SystemOut),
+			}
+			return currJunit
+		}
+
+		var exitErr *exec.ExitError
+		if errors.As(execErr, &exitErr) && exitErr.ExitCode() != 0 {
+			// don't add the currJunit.FailureOutput so that this becomes a success
+			// TODO Perhaps we require some kind stderr matching?
+			return currJunit
+		}
+
 		currJunit.FailureOutput = &junitapi.FailureOutput{
-			Message: fmt.Sprintf("%v\n%v", err, currJunit.SystemErr),
-			Output:  fmt.Sprintf("ERROR:%v\n\nSTDERR:\n%s\n\nSTDOUT:\n:%s\n", err, currJunit.SystemErr, currJunit.SystemOut),
+			Message: fmt.Sprintf("%v\n%v", execErr, currJunit.SystemErr),
+			Output:  fmt.Sprintf("ERROR:%v\n\nSTDERR:\n%s\n\nSTDOUT:\n:%s\n", execErr, currJunit.SystemErr, currJunit.SystemOut),
 		}
 		return currJunit
 	}
 
 	expectedOutputDir := filepath.Join(test.TestDirectory, "expected-output")
-	expectedResult, err := libraryapplyconfiguration.NewApplyConfigurationResultFromDirectory(expectedOutputDir, nil)
-	if err != nil {
+	expectedResult, execErr := libraryapplyconfiguration.NewApplyConfigurationResultFromDirectory(expectedOutputDir, nil)
+	if execErr != nil {
 		currJunit.FailureOutput = &junitapi.FailureOutput{
-			Message: fmt.Sprintf("failed to read expected output:\n%v\n", err),
-			Output:  fmt.Sprintf("failed to read expected output:\n%v\n", err),
+			Message: fmt.Sprintf("failed to read expected output:\n%v\n", execErr),
+			Output:  fmt.Sprintf("failed to read expected output:\n%v\n", execErr),
 		}
 		return currJunit
 	}

@@ -37,6 +37,17 @@ func equivalentErrors(field string, lhs, rhs error) []string {
 }
 
 func EquivalentClusterApplyResult(field string, lhs, rhs SingleClusterDesiredMutationGetter) []string {
+	switch {
+	case lhs == nil && rhs == nil:
+		return nil
+	case lhs == nil && rhs != nil:
+		return []string{fmt.Sprintf("%v: lhs=nil, len(rhs)=%v", field, len(rhs.Requests().AllRequests()))}
+	case lhs != nil && rhs == nil:
+		return []string{fmt.Sprintf("%v: len(lhs)=%v, rhs=nil", field, len(lhs.Requests().AllRequests()))}
+	case lhs != nil && rhs != nil:
+		// check the rest
+	}
+
 	lhsRequests := lhs.Requests()
 	rhsRequests := rhs.Requests()
 
