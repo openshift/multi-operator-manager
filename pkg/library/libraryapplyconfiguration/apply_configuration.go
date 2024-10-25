@@ -37,24 +37,13 @@ var (
 	_ AllDesiredMutationsGetter = &applyConfiguration{}
 )
 
-func ValidateAllDesiredMutationsGetter(allDesiredMutationsGetter AllDesiredMutationsGetter, allAllowedOutputResources *libraryoutputresources.OutputResources) error {
-	errs := []error{}
-
-	if allDesiredMutationsGetter == nil {
-		return fmt.Errorf("applyConfiguration is required")
-	}
-
+func UnspecifiedOutputResources(allDesiredMutationsGetter AllDesiredMutationsGetter, allAllowedOutputResources *libraryoutputresources.OutputResources) []manifestclient.SerializedRequestish {
 	allMutationRequests := []manifestclient.SerializedRequestish{}
 	for _, clusterType := range sets.List(AllClusterTypes) {
 		desiredMutationsGetter := allDesiredMutationsGetter.MutationsForClusterType(clusterType)
-		switch {
-		case desiredMutationsGetter == nil:
-			errs = append(errs, fmt.Errorf("mutations for %q are required even if empty", clusterType))
-		case desiredMutationsGetter.GetClusterType() != clusterType:
-			errs = append(errs, fmt.Errorf("mutations for %q reported type=%q", clusterType, desiredMutationsGetter.GetClusterType()))
+		if desiredMutationsGetter != nil {
+			allMutationRequests = append(allMutationRequests, desiredMutationsGetter.Requests().AllRequests()...)
 		}
-
-		allMutationRequests = append(allMutationRequests, desiredMutationsGetter.Requests().AllRequests()...)
 	}
 
 	combinedList := &libraryoutputresources.ResourceList{}
@@ -66,7 +55,18 @@ func ValidateAllDesiredMutationsGetter(allDesiredMutationsGetter AllDesiredMutat
 	combinedList.GeneratedNameResources = append(combinedList.GeneratedNameResources, allAllowedOutputResources.UserWorkloadResources.GeneratedNameResources...)
 	filteredMutationRequests := FilterSerializedRequests(allMutationRequests, combinedList)
 
-	if unspecifiedOutputResources := manifestclient.DifferenceOfSerializedRequests(allMutationRequests, filteredMutationRequests); len(unspecifiedOutputResources) > 0 {
+	return manifestclient.DifferenceOfSerializedRequests(allMutationRequests, filteredMutationRequests)
+}
+
+func ValidateAllDesiredMutationsGetter(allDesiredMutationsGetter AllDesiredMutationsGetter, allAllowedOutputResources *libraryoutputresources.OutputResources) error {
+	errs := []error{}
+
+	if allDesiredMutationsGetter == nil {
+		return fmt.Errorf("applyConfiguration is required")
+	}
+
+	unspecifiedOutputResources := UnspecifiedOutputResources(allDesiredMutationsGetter, allAllowedOutputResources)
+	if len(unspecifiedOutputResources) > 0 {
 		unspecifiedOutputIdentifiers := []string{}
 		for _, curr := range unspecifiedOutputResources {
 			unspecifiedOutputIdentifiers = append(unspecifiedOutputIdentifiers, curr.GetSerializedRequest().StringID())

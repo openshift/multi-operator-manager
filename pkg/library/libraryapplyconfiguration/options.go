@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/openshift/library-go/pkg/manifestclient"
 	"os"
+	"path/filepath"
 
 	"github.com/openshift/multi-operator-manager/pkg/library/libraryoutputresources"
 )
@@ -48,6 +50,7 @@ func (o *applyConfigurationOptions) Run(ctx context.Context) error {
 	}
 
 	// also validate the raw results because filtering may have eliminated "bad" output.
+	unspecifiedOutputResources := UnspecifiedOutputResources(result, allAllowedOutputResources)
 	if err := ValidateAllDesiredMutationsGetter(result, allAllowedOutputResources); err != nil {
 		errs = append(errs, err)
 	}
@@ -60,6 +63,11 @@ func (o *applyConfigurationOptions) Run(ctx context.Context) error {
 
 	if err := WriteApplyConfiguration(filteredResult, o.outputDirectory); err != nil {
 		errs = append(errs, err)
+	}
+	if len(unspecifiedOutputResources) > 0 {
+		if err := manifestclient.WriteMutationDirectory(filepath.Join(o.outputDirectory, "Unspecified"), unspecifiedOutputResources...); err != nil {
+			errs = append(errs, err)
+		}
 	}
 
 	return errors.Join(errs...)
