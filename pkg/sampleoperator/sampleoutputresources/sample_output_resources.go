@@ -8,29 +8,18 @@ import (
 func SampleRunOutputResources(ctx context.Context) (*libraryoutputresources.OutputResources, error) {
 	// TODO probably make this a yaml file directly?  I don't know, it's not too bad like this.
 	return &libraryoutputresources.OutputResources{
-		ConfigurationResources: libraryoutputresources.ResourceList{},
+		ConfigurationResources: libraryoutputresources.ResourceList{
+			ExactResources: []libraryoutputresources.ExactResourceID{
+				libraryoutputresources.ExactResource("config.openshift.io", "ingresses", "", "cluster"),
+			}},
 		ManagementResources: libraryoutputresources.ResourceList{
 			ExactResources: []libraryoutputresources.ExactResourceID{
-				{
-					OutputResourceTypeIdentifier: libraryoutputresources.OutputResourceTypeIdentifier{
-						Group:    "config.openshift.io",
-						Resource: "ingresses",
-					},
-					Namespace: "",
-					Name:      "cluster",
-				},
+				libraryoutputresources.ExactResource("operator.openshift.io", "authentications", "", "cluster"),
 			},
 		},
 		UserWorkloadResources: libraryoutputresources.ResourceList{
 			ExactResources: []libraryoutputresources.ExactResourceID{
-				{
-					OutputResourceTypeIdentifier: libraryoutputresources.OutputResourceTypeIdentifier{
-						Group:    "oauth.openshift.io",
-						Resource: "oauthclients",
-					},
-					Namespace: "",
-					Name:      "openshift-browser-client",
-				},
+				libraryoutputresources.ExactResource("oauth.openshift.io", "oauthclients", "", "openshift-browser-client"),
 			},
 		},
 	}, nil
