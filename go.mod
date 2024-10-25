@@ -123,3 +123,5 @@ require (
 	sigs.k8s.io/kube-storage-version-migrator v0.0.6-0.20230721195810-5c8923c5ff96 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 )
+
+replace github.com/openshift/library-go => github.com/p0lyn0mial/library-go v0.0.0-20241025080955-22fbb1c2e3c8

@@ -303,8 +303,9 @@ github.com/openshift/client-go/operator/informers/externalversions/operator/v1
 github.com/openshift/client-go/operator/informers/externalversions/operator/v1alpha1
 github.com/openshift/client-go/operator/listers/operator/v1
 github.com/openshift/client-go/operator/listers/operator/v1alpha1
-# github.com/openshift/library-go v0.0.0-20241016162852-a9bf3fe3cd0a
+# github.com/openshift/library-go v0.0.0-20241016162852-a9bf3fe3cd0a => github.com/p0lyn0mial/library-go v0.0.0-20241025080955-22fbb1c2e3c8
 ## explicit; go 1.22.0
+github.com/openshift/library-go/pkg/apiserver/jsonpatch
 github.com/openshift/library-go/pkg/certs
 github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers
 github.com/openshift/library-go/pkg/controller/factory
@@ -1355,3 +1356,4 @@ sigs.k8s.io/structured-merge-diff/v4/value
 ## explicit; go 1.12
 sigs.k8s.io/yaml
 sigs.k8s.io/yaml/goyaml.v2
+# github.com/openshift/library-go => github.com/p0lyn0mial/library-go v0.0.0-20241025080955-22fbb1c2e3c8
