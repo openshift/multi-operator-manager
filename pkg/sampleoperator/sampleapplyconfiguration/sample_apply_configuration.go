@@ -77,8 +77,8 @@ func CreateOperatorInputFromMOM(ctx context.Context, momInput libraryapplyconfig
 	authenticationOperatorClient, dynamicInformers, err := genericoperatorclient.NewOperatorClientWithClient(
 		momInput.Clock,
 		momInput.MutationTrackingClient.GetHTTPClient(),
-		operatorv1.GroupVersion.WithResource("examples"),
-		operatorv1.GroupVersion.WithKind("Example"),
+		operatorv1.GroupVersion.WithResource("authentications"),
+		operatorv1.GroupVersion.WithKind("Authentication"),
 		extractOperatorSpec,
 		extractOperatorStatus,
 	)
