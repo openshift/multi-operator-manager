@@ -155,31 +155,38 @@ func CreateOperatorStarter(ctx context.Context, exampleOperatorInput *exampleOpe
 		exampleOperatorInput.eventRecorder,
 	)
 	ret.ControllerRunFns = append(ret.ControllerRunFns, libraryapplyconfiguration.AdaptRunFn(resourceSyncer.Run))
-	ret.ControllerRunOnceFns = append(ret.ControllerRunOnceFns, libraryapplyconfiguration.AdaptSyncFn(exampleOperatorInput.eventRecorder, resourceSyncer.Sync))
+	ret.ControllerNamedRunOnceFns = append(ret.ControllerNamedRunOnceFns,
+		libraryapplyconfiguration.AdaptSyncFn(exampleOperatorInput.eventRecorder, resourceSyncer.Name(), resourceSyncer.Sync))
 
 	// the good example was above, now just add a few resources for us to play with
 
-	ret.ControllerRunOnceFns = append(ret.ControllerRunOnceFns, func(ctx context.Context) error {
-		exampleOperatorInput.configClient.ConfigV1().Ingresses().Create(ctx, &configv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: "cluster"}}, metav1.CreateOptions{})
-		return nil
-	})
+	ret.ControllerNamedRunOnceFns = append(ret.ControllerNamedRunOnceFns, libraryapplyconfiguration.NewNamedRunOnce(
+		"ingress-creator",
+		func(ctx context.Context) error {
+			exampleOperatorInput.configClient.ConfigV1().Ingresses().Create(ctx, &configv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: "cluster"}}, metav1.CreateOptions{})
+			return nil
+		},
+	))
 
 	// this ensures the configmapinformer is requested so that it will start.
 	kubeInformersForNamespaces.ConfigMapLister().ConfigMaps("openshift-authentication")
-	ret.ControllerRunOnceFns = append(ret.ControllerRunOnceFns, func(ctx context.Context) error {
-		//_, err := exampleOperatorInput.kubeClient.CoreV1().ConfigMaps("openshift-authentication").Get(ctx, "fail-check", metav1.GetOptions{})
-		_, err := kubeInformersForNamespaces.ConfigMapLister().ConfigMaps("openshift-authentication").Get("fail-check")
-		if apierrors.IsNotFound(err) {
-			fmt.Printf("forced-failure not required\n")
-			return nil
-		}
-		if err != nil {
-			fmt.Printf("failed to get configmap: %v\n", err)
-			return err
-		}
-		fmt.Printf("forcing an error\n")
-		return fmt.Errorf("fail the process")
-	})
+	ret.ControllerNamedRunOnceFns = append(ret.ControllerNamedRunOnceFns, libraryapplyconfiguration.NewNamedRunOnce(
+		"failure-generator",
+		func(ctx context.Context) error {
+			//_, err := exampleOperatorInput.kubeClient.CoreV1().ConfigMaps("openshift-authentication").Get(ctx, "fail-check", metav1.GetOptions{})
+			_, err := kubeInformersForNamespaces.ConfigMapLister().ConfigMaps("openshift-authentication").Get("fail-check")
+			if apierrors.IsNotFound(err) {
+				fmt.Printf("forced-failure not required\n")
+				return nil
+			}
+			if err != nil {
+				fmt.Printf("failed to get configmap: %v\n", err)
+				return err
+			}
+			fmt.Printf("forcing an error\n")
+			return fmt.Errorf("fail the process")
+		},
+	))
 
 	return ret, nil
 }
