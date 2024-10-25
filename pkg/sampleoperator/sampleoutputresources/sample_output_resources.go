@@ -16,6 +16,9 @@ func SampleRunOutputResources(ctx context.Context) (*libraryoutputresources.Outp
 			ExactResources: []libraryoutputresources.ExactResourceID{
 				libraryoutputresources.ExactResource("operator.openshift.io", "authentications", "", "cluster"),
 			},
+			EventingNamespaces: []string{
+				"openshift-example-operator",
+			},
 		},
 		UserWorkloadResources: libraryoutputresources.ResourceList{
 			ExactResources: []libraryoutputresources.ExactResourceID{

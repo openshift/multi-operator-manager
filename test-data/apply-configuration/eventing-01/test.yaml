@@ -1,0 +1,6 @@
+binaryName: ./sample-operator
+testName: basic call
+description: >
+  Test the ability to emit events
+testType: ApplyConfiguration
+now: 2024-10-14T22:38:20Z

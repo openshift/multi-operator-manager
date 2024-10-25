@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/openshift/library-go/pkg/manifestclient"
 	"github.com/openshift/multi-operator-manager/pkg/library/libraryoutputresources"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type clientBasedClusterApplyResult struct {
@@ -110,6 +111,19 @@ func (f filteringMutationActionReader) AllRequests() []manifestclient.Serialized
 	return FilterSerializedRequests(f.delegate.AllRequests(), f.resourceList)
 }
 
+func RemoveEvents(requests []manifestclient.SerializedRequestish) []manifestclient.SerializedRequestish {
+	filteredRequests := []manifestclient.SerializedRequestish{}
+
+	for _, curr := range requests {
+		metadata := curr.GetSerializedRequest().GetLookupMetadata()
+		if metadata.GVR.GroupResource() == coreEventGR || metadata.GVR.GroupResource() == eventGR {
+			continue
+		}
+		filteredRequests = append(filteredRequests, curr)
+	}
+	return filteredRequests
+}
+
 func FilterSerializedRequests(requests []manifestclient.SerializedRequestish, allowedResources *libraryoutputresources.ResourceList) []manifestclient.SerializedRequestish {
 	filteredRequests := []manifestclient.SerializedRequestish{}
 
@@ -122,9 +136,29 @@ func FilterSerializedRequests(requests []manifestclient.SerializedRequestish, al
 	return filteredRequests
 }
 
+var (
+	coreEventGR = schema.GroupResource{
+		Group:    "",
+		Resource: "events",
+	}
+	eventGR = schema.GroupResource{
+		Group:    "events.k8s.io",
+		Resource: "events",
+	}
+)
+
 func metadataMatchesFilter(metadata manifestclient.ActionMetadata, allowedResources *libraryoutputresources.ResourceList) bool {
 	if allowedResources == nil {
 		return true
+	}
+
+	gr := metadata.GVR.GroupResource()
+	if gr == coreEventGR || gr == eventGR {
+		for _, curr := range allowedResources.EventingNamespaces {
+			if metadata.Namespace == curr {
+				return true
+			}
+		}
 	}
 
 	for _, curr := range allowedResources.ExactResources {
@@ -149,5 +183,6 @@ func metadataMatchesFilter(metadata manifestclient.ActionMetadata, allowedResour
 			return true
 		}
 	}
+
 	return false
 }

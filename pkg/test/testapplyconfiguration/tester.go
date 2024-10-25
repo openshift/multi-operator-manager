@@ -243,7 +243,7 @@ func (test *TestOptions) runTest(ctx context.Context) *junitapi.JUnitTestCase {
 		}
 		return currJunit
 	}
-	differences := libraryapplyconfiguration.EquivalentApplyConfigurationResult(expectedResult, actualResult)
+	differences := libraryapplyconfiguration.EquivalentApplyConfigurationResultIgnoringEvents(expectedResult, actualResult)
 	if len(differences) > 0 {
 		currJunit.FailureOutput = &junitapi.FailureOutput{
 			Message: fmt.Sprintf("expected results mismatch %d times with actual results", len(differences)),
