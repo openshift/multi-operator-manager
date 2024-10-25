@@ -154,7 +154,7 @@ func CreateOperatorStarter(ctx context.Context, exampleOperatorInput *exampleOpe
 		exampleOperatorInput.eventRecorder,
 	)
 	ret.ControllerRunFns = append(ret.ControllerRunFns, libraryapplyconfiguration.AdaptRunFn(resourceSyncer.Run))
-	ret.ControllerRunOnceFns = append(ret.ControllerRunOnceFns, libraryapplyconfiguration.AdaptSyncFn(exampleOperatorInput.eventRecorder, resourceSyncer.Sync))
+	ret.ControllerNamedRunOnceFns = append(ret.ControllerNamedRunOnceFns, libraryapplyconfiguration.AdaptSyncFn(exampleOperatorInput.eventRecorder, resourceSyncer.Name(), resourceSyncer.Sync))
 
 	return ret, nil
 }
