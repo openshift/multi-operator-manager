@@ -37,11 +37,11 @@ var (
 	_ AllDesiredMutationsGetter = &applyConfiguration{}
 )
 
-func ValidateAllDesiredMutationsGetter(allDesiredMutationsGetter AllDesiredMutationsGetter, allAllowedOutputResources *libraryoutputresources.OutputResources) error {
+func ValidateUnfilteredMutations(allDesiredMutationsGetter AllDesiredMutationsGetter, allAllowedOutputResources *libraryoutputresources.OutputResources) []error {
 	errs := []error{}
 
 	if allDesiredMutationsGetter == nil {
-		return fmt.Errorf("applyConfiguration is required")
+		return []error{fmt.Errorf("applyConfiguration is required")}
 	}
 
 	allMutationRequests := []manifestclient.SerializedRequestish{}
@@ -74,7 +74,30 @@ func ValidateAllDesiredMutationsGetter(allDesiredMutationsGetter AllDesiredMutat
 		errs = append(errs, fmt.Errorf("%d output-resource were produced, but not present in the specified output: %v", len(unspecifiedOutputIdentifiers), strings.Join(unspecifiedOutputIdentifiers, ", ")))
 	}
 
-	return errors.Join(errs...)
+	return errs
+}
+
+func ValidateAllDesiredMutationsGetter(allDesiredMutationsGetter AllDesiredMutationsGetter, allAllowedOutputResources *libraryoutputresources.OutputResources) []error {
+	errs := []error{}
+
+	if allDesiredMutationsGetter == nil {
+		return []error{fmt.Errorf("applyConfiguration is required")}
+	}
+
+	allMutationRequests := []manifestclient.SerializedRequestish{}
+	for _, clusterType := range sets.List(AllClusterTypes) {
+		desiredMutationsGetter := allDesiredMutationsGetter.MutationsForClusterType(clusterType)
+		switch {
+		case desiredMutationsGetter == nil:
+			errs = append(errs, fmt.Errorf("mutations for %q are required even if empty", clusterType))
+		case desiredMutationsGetter.GetClusterType() != clusterType:
+			errs = append(errs, fmt.Errorf("mutations for %q reported type=%q", clusterType, desiredMutationsGetter.GetClusterType()))
+		}
+
+		allMutationRequests = append(allMutationRequests, desiredMutationsGetter.Requests().AllRequests()...)
+	}
+
+	return errs
 }
 
 func WriteApplyConfiguration(desiredApplyConfiguration AllDesiredMutationsGetter, outputDirectory string) error {

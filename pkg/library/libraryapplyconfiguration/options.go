@@ -48,14 +48,14 @@ func (o *applyConfigurationOptions) Run(ctx context.Context) error {
 	}
 
 	// also validate the raw results because filtering may have eliminated "bad" output.
-	if err := ValidateAllDesiredMutationsGetter(result, allAllowedOutputResources); err != nil {
-		errs = append(errs, err)
+	if localErrs := ValidateUnfilteredMutations(result, allAllowedOutputResources); len(localErrs) > 0 {
+		errs = append(errs, localErrs...)
 	}
 
 	// now filter the results and check them
 	filteredResult := FilterAllDesiredMutationsGetter(result, allAllowedOutputResources)
-	if err := ValidateAllDesiredMutationsGetter(filteredResult, allAllowedOutputResources); err != nil {
-		errs = append(errs, err)
+	if localErrs := ValidateAllDesiredMutationsGetter(filteredResult, allAllowedOutputResources); len(localErrs) > 0 {
+		errs = append(errs, localErrs...)
 	}
 
 	if err := WriteApplyConfiguration(filteredResult, o.outputDirectory); err != nil {

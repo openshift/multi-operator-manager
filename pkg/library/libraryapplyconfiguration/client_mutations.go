@@ -64,8 +64,8 @@ func FilterAllDesiredMutationsGetter(
 		}
 
 		ret.desiredMutationsByClusterType[clusterType] = &filteringSingleClusterDesiredMutationGetter{
-			delegate:     in.MutationsForClusterType(clusterType),
-			resourceList: clusterTypeFilter,
+			delegate:            in.MutationsForClusterType(clusterType),
+			allowedResourceList: clusterTypeFilter,
 		}
 	}
 
@@ -73,8 +73,8 @@ func FilterAllDesiredMutationsGetter(
 }
 
 type filteringSingleClusterDesiredMutationGetter struct {
-	delegate     SingleClusterDesiredMutationGetter
-	resourceList *libraryoutputresources.ResourceList
+	delegate            SingleClusterDesiredMutationGetter
+	allowedResourceList *libraryoutputresources.ResourceList
 }
 
 func (f filteringSingleClusterDesiredMutationGetter) GetClusterType() ClusterType {
@@ -83,8 +83,8 @@ func (f filteringSingleClusterDesiredMutationGetter) GetClusterType() ClusterTyp
 
 func (f filteringSingleClusterDesiredMutationGetter) Requests() MutationActionReader {
 	return &filteringMutationActionReader{
-		delegate:     f.delegate.Requests(),
-		resourceList: f.resourceList,
+		delegate:            f.delegate.Requests(),
+		allowedResourceList: f.allowedResourceList,
 	}
 }
 
@@ -94,8 +94,8 @@ var (
 )
 
 type filteringMutationActionReader struct {
-	delegate     MutationActionReader
-	resourceList *libraryoutputresources.ResourceList
+	delegate            MutationActionReader
+	allowedResourceList *libraryoutputresources.ResourceList
 }
 
 func (f filteringMutationActionReader) ListActions() []manifestclient.Action {
@@ -103,11 +103,11 @@ func (f filteringMutationActionReader) ListActions() []manifestclient.Action {
 }
 
 func (f filteringMutationActionReader) RequestsForAction(action manifestclient.Action) []manifestclient.SerializedRequestish {
-	return FilterSerializedRequests(f.delegate.RequestsForAction(action), f.resourceList)
+	return FilterSerializedRequests(f.delegate.RequestsForAction(action), f.allowedResourceList)
 }
 
 func (f filteringMutationActionReader) AllRequests() []manifestclient.SerializedRequestish {
-	return FilterSerializedRequests(f.delegate.AllRequests(), f.resourceList)
+	return FilterSerializedRequests(f.delegate.AllRequests(), f.allowedResourceList)
 }
 
 func FilterSerializedRequests(requests []manifestclient.SerializedRequestish, allowedResources *libraryoutputresources.ResourceList) []manifestclient.SerializedRequestish {
