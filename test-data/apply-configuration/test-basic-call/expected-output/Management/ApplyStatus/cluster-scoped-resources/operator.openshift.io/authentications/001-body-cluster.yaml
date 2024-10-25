@@ -1,5 +1,5 @@
 apiVersion: operator.openshift.io/v1
-kind: Example
+kind: Authentication
 metadata:
   name: cluster
 status:
