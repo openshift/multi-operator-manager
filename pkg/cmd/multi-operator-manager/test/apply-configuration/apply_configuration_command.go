@@ -139,6 +139,9 @@ func (f *TestApplyConfigurationFlags) ToOptions(ctx context.Context) (*testapply
 func validateTest(path *field.Path, testOptions *testapplyconfiguration.TestOptions) []error {
 	errs := []error{}
 
+	if len(testOptions.Description.BinaryName) == 0 {
+		errs = append(errs, field.Required(path.Child("binaryName"), "must be present"))
+	}
 	if len(testOptions.Description.TestName) == 0 {
 		errs = append(errs, field.Required(path.Child("testName"), "must be present"))
 	}

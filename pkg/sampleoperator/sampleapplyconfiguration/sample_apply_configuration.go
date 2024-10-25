@@ -164,6 +164,23 @@ func CreateOperatorStarter(ctx context.Context, exampleOperatorInput *exampleOpe
 		return nil
 	})
 
+	// this ensures the configmapinformer is requested so that it will start.
+	kubeInformersForNamespaces.ConfigMapLister().ConfigMaps("openshift-authentication")
+	ret.ControllerRunOnceFns = append(ret.ControllerRunOnceFns, func(ctx context.Context) error {
+		//_, err := exampleOperatorInput.kubeClient.CoreV1().ConfigMaps("openshift-authentication").Get(ctx, "fail-check", metav1.GetOptions{})
+		_, err := kubeInformersForNamespaces.ConfigMapLister().ConfigMaps("openshift-authentication").Get("fail-check")
+		if apierrors.IsNotFound(err) {
+			fmt.Printf("forced-failure not required\n")
+			return nil
+		}
+		if err != nil {
+			fmt.Printf("failed to get configmap: %v\n", err)
+			return err
+		}
+		fmt.Printf("forcing an error\n")
+		return fmt.Errorf("fail the process")
+	})
+
 	return ret, nil
 }
 

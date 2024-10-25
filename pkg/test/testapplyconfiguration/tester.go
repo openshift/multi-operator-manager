@@ -171,6 +171,14 @@ func (test *TestOptions) runTest(ctx context.Context) *junitapi.JUnitTestCase {
 	switch {
 	case execErr == nil && actualResult != nil:
 		// this was successful
+		if test.Description.DesiredError == NonZeroReturn {
+			currJunit.FailureOutput = &junitapi.FailureOutput{
+				Message: "test requires non-zero exit code from apply-configuration",
+				Output:  "test requires non-zero exit code from apply-configuration",
+			}
+			// fall out of the switch/case so we check the output too for friendliness
+		}
+
 	case execErr == nil && actualResult == nil:
 		currJunit.FailureOutput = &junitapi.FailureOutput{
 			Message: "No result or error from apply-configuration",
@@ -181,23 +189,48 @@ func (test *TestOptions) runTest(ctx context.Context) *junitapi.JUnitTestCase {
 	case execErr != nil && actualResult != nil:
 		currJunit.SystemOut = actualResult.Stdout()
 		currJunit.SystemErr = actualResult.Stderr()
-		fallthrough
-	case execErr != nil && actualResult == nil:
-		switch {
-		case test.Description.DesiredError == NonZeroReturn:
-			var exitErr *exec.ExitError
-			if !errors.As(execErr, &exitErr) {
-				// TODO figure if more verification makes sense.
-				// TODO probably add inspection of stderr and stdout for comparison
-				exitErr.ExitCode()
-			} else {
-				currJunit.FailureOutput = &junitapi.FailureOutput{
-					Message: fmt.Sprintf("%v\n%v", execErr, currJunit.SystemErr),
-					Output:  fmt.Sprintf("ERROR:%v\n\nSTDERR:\n%s\n\nSTDOUT:\n:%s\n", execErr, currJunit.SystemErr, currJunit.SystemOut),
-				}
+
+		// if we aren't expecting non-zero returns, mark the test case to fail, but continue to check the output
+		if test.Description.DesiredError != NonZeroReturn {
+			currJunit.FailureOutput = &junitapi.FailureOutput{
+				Message: fmt.Sprintf("%v\n%v", execErr, currJunit.SystemErr),
+				Output:  fmt.Sprintf("ERROR:%v\n\nSTDERR:\n%s\n\nSTDOUT:\n:%s\n", execErr, currJunit.SystemErr, currJunit.SystemOut),
 			}
 		}
 
+		// if the failure isn't an exit code failure, then fail straight away
+		var exitErr *exec.ExitError
+		if !errors.As(execErr, &exitErr) {
+			currJunit.FailureOutput = &junitapi.FailureOutput{
+				Message: fmt.Sprintf("%v\n%v", execErr, currJunit.SystemErr),
+				Output:  fmt.Sprintf("ERROR:%v\n\nSTDERR:\n%s\n\nSTDOUT:\n:%s\n", execErr, currJunit.SystemErr, currJunit.SystemOut),
+			}
+			return currJunit
+		}
+		// if the failure is an exit code failure, continue to test the output.
+		// TODO Perhaps we require some kind stderr matching?
+
+	case execErr != nil && actualResult == nil:
+		// if we aren't expecting non-zero returns, then fail
+		if test.Description.DesiredError != NonZeroReturn {
+			currJunit.FailureOutput = &junitapi.FailureOutput{
+				Message: fmt.Sprintf("%v\n%v", execErr, currJunit.SystemErr),
+				Output:  fmt.Sprintf("ERROR:%v\n\nSTDERR:\n%s\n\nSTDOUT:\n:%s\n", execErr, currJunit.SystemErr, currJunit.SystemOut),
+			}
+			return currJunit
+		}
+
+		var exitErr *exec.ExitError
+		if errors.As(execErr, &exitErr) && exitErr.ExitCode() != 0 {
+			// don't add the currJunit.FailureOutput so that this becomes a success
+			// TODO Perhaps we require some kind stderr matching?
+			return currJunit
+		}
+
+		currJunit.FailureOutput = &junitapi.FailureOutput{
+			Message: fmt.Sprintf("%v\n%v", execErr, currJunit.SystemErr),
+			Output:  fmt.Sprintf("ERROR:%v\n\nSTDERR:\n%s\n\nSTDOUT:\n:%s\n", execErr, currJunit.SystemErr, currJunit.SystemOut),
+		}
 		return currJunit
 	}
 
