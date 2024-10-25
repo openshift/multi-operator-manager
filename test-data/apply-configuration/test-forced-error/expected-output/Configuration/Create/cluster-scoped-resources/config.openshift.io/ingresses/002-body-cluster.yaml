@@ -1,6 +1,8 @@
 apiVersion: config.openshift.io/v1
 kind: Ingress
 metadata:
+  annotations:
+    operator.openshift.io/controller-name: ingress-creator
   creationTimestamp: null
   name: cluster
 spec:

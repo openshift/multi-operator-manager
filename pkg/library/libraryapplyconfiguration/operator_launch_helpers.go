@@ -3,12 +3,13 @@ package libraryapplyconfiguration
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/openshift/library-go/pkg/controller/factory"
 	"github.com/openshift/library-go/pkg/manifestclient"
 	"github.com/openshift/library-go/pkg/operator/events"
-
 	"k8s.io/client-go/dynamic/dynamicinformer"
 )
 
@@ -45,9 +46,14 @@ func (a SimpleOperatorStarter) RunOnce(ctx context.Context) error {
 
 	for _, controllerRunner := range a.ControllerNamedRunOnceFns {
 		// TODO add timeout.
-		ctx = manifestclient.WithControllerNameInContext(ctx, controllerRunner.Name())
-		err := controllerRunner.RunOnce(ctx)
-		errs = append(errs, err)
+		func() {
+			localCtx, localCancel := context.WithTimeout(ctx, 1*time.Second)
+			defer localCancel()
+			localCtx = manifestclient.WithControllerNameInContext(localCtx, controllerRunner.ControllerInstanceName())
+			if err := controllerRunner.RunOnce(localCtx); err != nil {
+				errs = append(errs, fmt.Errorf("controller %q failed: %w", controllerRunner.ControllerInstanceName(), err))
+			}
+		}()
 	}
 	return errors.Join(errs...)
 }
@@ -69,19 +75,19 @@ type SimplifiedInformerFactory interface {
 }
 
 type NamedRunOnce interface {
-	Name() string
+	ControllerInstanceName() string
 	RunOnce(context.Context) error
 }
 
 type namedRunOnce struct {
-	name    string
-	runOnce RunOnceFunc
+	controllerInstanceName string
+	runOnce                RunOnceFunc
 }
 
-func NewNamedRunOnce(name string, runOnce RunOnceFunc) *namedRunOnce {
+func NewNamedRunOnce(controllerInstanceName string, runOnce RunOnceFunc) *namedRunOnce {
 	return &namedRunOnce{
-		name:    name,
-		runOnce: runOnce,
+		controllerInstanceName: controllerInstanceName,
+		runOnce:                runOnce,
 	}
 }
 
@@ -89,8 +95,8 @@ func (r *namedRunOnce) RunOnce(ctx context.Context) error {
 	return r.runOnce(ctx)
 }
 
-func (r *namedRunOnce) Name() string {
-	return r.name
+func (r *namedRunOnce) ControllerInstanceName() string {
+	return r.controllerInstanceName
 }
 
 type RunOnceFunc func(ctx context.Context) error
