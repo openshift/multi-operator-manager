@@ -235,7 +235,7 @@ func (test *TestOptions) runTest(ctx context.Context) *junitapi.JUnitTestCase {
 	}
 
 	expectedOutputDir := filepath.Join(test.TestDirectory, "expected-output")
-	expectedResult, execErr := libraryapplyconfiguration.NewApplyConfigurationResultFromDirectory(expectedOutputDir, nil)
+	expectedResult, execErr := libraryapplyconfiguration.NewApplyConfigurationResultFromDirectory(os.DirFS(expectedOutputDir), expectedOutputDir, nil)
 	if execErr != nil {
 		currJunit.FailureOutput = &junitapi.FailureOutput{
 			Message: fmt.Sprintf("failed to read expected output:\n%v\n", execErr),
