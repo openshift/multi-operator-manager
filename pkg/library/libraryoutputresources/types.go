@@ -26,6 +26,12 @@ type ResourceList struct {
 	// This is not a cheat code for prefix matching.
 	GeneratedNameResources []GeneratedResourceID `json:"generatedNameResource,omitempty"`
 
+	// eventingNamespaces holds a list of namespaces that the operator can output event into.
+	// This allows redirection of events to a particular cluster on a per-namespace level.
+	// For instance, the openshift-authentication-operator  can go to management, but openshift-authentication can go
+	// to the userWorkload cluster.
+	EventingNamespaces []string `json:"eventingNamespaces,omitempty"`
+
 	// TODO I bet this covers 95% of what we need, but maybe we need label selector.
 	// I'm a solid -1 on "pattern" based selection. We select in kube based on label selectors.
 }

@@ -53,6 +53,9 @@ func UnspecifiedOutputResources(allDesiredMutationsGetter AllDesiredMutationsGet
 	combinedList.GeneratedNameResources = append(combinedList.GeneratedNameResources, allAllowedOutputResources.ConfigurationResources.GeneratedNameResources...)
 	combinedList.GeneratedNameResources = append(combinedList.GeneratedNameResources, allAllowedOutputResources.ManagementResources.GeneratedNameResources...)
 	combinedList.GeneratedNameResources = append(combinedList.GeneratedNameResources, allAllowedOutputResources.UserWorkloadResources.GeneratedNameResources...)
+	combinedList.EventingNamespaces = append(combinedList.EventingNamespaces, allAllowedOutputResources.ConfigurationResources.EventingNamespaces...)
+	combinedList.EventingNamespaces = append(combinedList.EventingNamespaces, allAllowedOutputResources.ManagementResources.EventingNamespaces...)
+	combinedList.EventingNamespaces = append(combinedList.EventingNamespaces, allAllowedOutputResources.UserWorkloadResources.EventingNamespaces...)
 	filteredMutationRequests := FilterSerializedRequests(allMutationRequests, combinedList)
 
 	return manifestclient.DifferenceOfSerializedRequests(allMutationRequests, filteredMutationRequests)

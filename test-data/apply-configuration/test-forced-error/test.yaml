@@ -1,7 +1,7 @@
 binaryName: ./sample-operator
 testName: basic call
 description: >
-  Test something simple.
+  Test the ability to have apply-configuration return non-zero, but still have the output checked.
 testType: ApplyConfiguration
 now: 2024-10-14T22:38:20Z
 desiredError: NonZeroReturn

@@ -3,6 +3,7 @@ package sampleapplyconfiguration
 import (
 	"context"
 	"fmt"
+	"github.com/openshift/library-go/pkg/manifestclient"
 	"os"
 	"time"
 
@@ -24,7 +25,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 )
 
 func SampleRunApplyConfiguration(ctx context.Context, input libraryapplyconfiguration.ApplyConfigurationInput) (libraryapplyconfiguration.AllDesiredMutationsGetter, error) {
@@ -60,17 +60,17 @@ const componentName = "cluster-example-operator"
 // This allows us to abstract the creation of clients from those things that depend on those clients so that initialization
 // can happen as normal.
 func CreateOperatorInputFromMOM(ctx context.Context, momInput libraryapplyconfiguration.ApplyConfigurationInput) (*exampleOperatorInput, error) {
-	kubeClient, err := kubernetes.NewForConfigAndClient(&rest.Config{}, momInput.MutationTrackingClient.GetHTTPClient())
+	kubeClient, err := kubernetes.NewForConfigAndClient(manifestclient.RecommendedRESTConfig(), momInput.MutationTrackingClient.GetHTTPClient())
 	if err != nil {
 		return nil, err
 	}
 
-	configClient, err := configclient.NewForConfigAndClient(&rest.Config{}, momInput.MutationTrackingClient.GetHTTPClient())
+	configClient, err := configclient.NewForConfigAndClient(manifestclient.RecommendedRESTConfig(), momInput.MutationTrackingClient.GetHTTPClient())
 	if err != nil {
 		return nil, err
 	}
 
-	operatorClient, err := operatorclient.NewForConfigAndClient(&rest.Config{}, momInput.MutationTrackingClient.GetHTTPClient())
+	operatorClient, err := operatorclient.NewForConfigAndClient(manifestclient.RecommendedRESTConfig(), momInput.MutationTrackingClient.GetHTTPClient())
 	if err != nil {
 		return nil, err
 	}
@@ -87,9 +87,9 @@ func CreateOperatorInputFromMOM(ctx context.Context, momInput libraryapplyconfig
 		return nil, err
 	}
 
-	eventRecorder := events.NewKubeRecorderWithOptions(
-		kubeClient.CoreV1().Events("openshift-authentication-operator"),
-		events.RecommendedClusterSingletonCorrelatorOptions(),
+	// TODO figure out to do correlation of events after we fluff them up
+	eventRecorder := events.NewRecorder(
+		kubeClient.CoreV1().Events("openshift-example-operator"),
 		componentName,
 		&corev1.ObjectReference{
 			Kind:      "Deployment",
@@ -173,7 +173,7 @@ func CreateOperatorStarter(ctx context.Context, exampleOperatorInput *exampleOpe
 	ret.ControllerNamedRunOnceFns = append(ret.ControllerNamedRunOnceFns, libraryapplyconfiguration.NewNamedRunOnce(
 		"failure-generator",
 		func(ctx context.Context) error {
-			//_, err := exampleOperatorInput.kubeClient.CoreV1().ConfigMaps("openshift-authentication").Get(ctx, "fail-check", metav1.GetOptions{})
+			exampleOperatorInput.eventRecorder.Event("must", "event")
 			_, err := kubeInformersForNamespaces.ConfigMapLister().ConfigMaps("openshift-authentication").Get("fail-check")
 			if apierrors.IsNotFound(err) {
 				fmt.Printf("forced-failure not required\n")
