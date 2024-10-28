@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/openshift/library-go/pkg/manifestclient"
 	"github.com/openshift/multi-operator-manager/pkg/library/libraryoutputresources"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/yaml"
 )
 
 type clientBasedClusterApplyResult struct {
@@ -150,4 +152,40 @@ func metadataMatchesFilter(metadata manifestclient.ActionMetadata, allowedResour
 		}
 	}
 	return false
+}
+
+func MutationsForControllerName(controllerName string, clusterMutationGetter SingleClusterDesiredMutationGetter) ([]manifestclient.SerializedRequestish, error) {
+	if len(controllerName) == 0 {
+		return nil, nil
+	}
+	var ret []manifestclient.SerializedRequestish
+	for _, mutation := range clusterMutationGetter.Requests().AllRequests() {
+		serializedRequestBody := mutation.GetSerializedRequest().Body
+
+		unstructuredRequestBody, _, jsonErr := unstructured.UnstructuredJSONScheme.Decode(serializedRequestBody, nil, &unstructured.Unstructured{})
+		if jsonErr != nil {
+			bodyFilename, _ := mutation.SuggestedFilenames()
+			jsonString, err := yaml.YAMLToJSON(serializedRequestBody)
+			if err != nil {
+				return nil, fmt.Errorf("unable to decode %q as json: %w", bodyFilename, jsonErr)
+			}
+			unstructuredRequestBody, _, err = unstructured.UnstructuredJSONScheme.Decode(jsonString, nil, &unstructured.Unstructured{})
+			if err != nil {
+				return nil, fmt.Errorf("unable to decode %q as yaml: %w", bodyFilename, err)
+			}
+		}
+
+		unstructuredObject, ok := unstructuredRequestBody.(*unstructured.Unstructured)
+		if !ok {
+			return nil, fmt.Errorf("expected *unstructured.Unstructured but got: %T", unstructuredRequestBody)
+		}
+		annotations := unstructuredObject.GetAnnotations()
+		if annotations == nil {
+			annotations = map[string]string{}
+		}
+		if annotations[manifestclient.ControllerNameAnnotation] == controllerName {
+			ret = append(ret, mutation)
+		}
+	}
+	return ret, nil
 }
