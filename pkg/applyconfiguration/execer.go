@@ -9,13 +9,15 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
 type ApplyConfigurationFlagValues struct {
-	InputDirectory  string
-	OutputDirectory string
-	Now             time.Time
+	InputDirectory   string
+	OutputDirectory  string
+	Now              time.Time
+	ControllersToRun []string
 }
 
 // ExecApplyConfiguration takes a binaryPath, inputDir, and desiredOutputDir and runs the binary
@@ -40,6 +42,9 @@ func ExecApplyConfiguration(ctx context.Context, binaryPath string, flagValues A
 	}
 	if !flagValues.Now.IsZero() {
 		args = append(args, "--now", flagValues.Now.Format(time.RFC3339))
+	}
+	if len(flagValues.ControllersToRun) > 0 {
+		args = append(args, "--controllers-to-run", strings.Join(flagValues.ControllersToRun, ","))
 	}
 
 	// TODO prove that the timeout works if the process captures sig-int
