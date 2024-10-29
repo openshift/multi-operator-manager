@@ -62,12 +62,19 @@ func ExecApplyConfiguration(ctx context.Context, binaryPath string, flagValues A
 			if err := stderrFile.Close(); err != nil {
 				utilruntime.HandleError(err)
 			}
-			return libraryapplyconfiguration.NewApplyConfigurationResultFromDirectory(flagValues.OutputDirectory,
+			return libraryapplyconfiguration.NewApplyConfigurationResultFromDirectory(
+				os.DirFS(flagValues.OutputDirectory),
+				flagValues.OutputDirectory,
 				fmt.Errorf("failed to wait for process %v: %w stderr: %v", cmd, err, string(exitErr.Stderr)))
 		}
-		return libraryapplyconfiguration.NewApplyConfigurationResultFromDirectory(flagValues.OutputDirectory,
+		return libraryapplyconfiguration.NewApplyConfigurationResultFromDirectory(
+			os.DirFS(flagValues.OutputDirectory),
+			flagValues.OutputDirectory,
 			fmt.Errorf("failed to wait for process: %w", err))
 	}
 
-	return libraryapplyconfiguration.NewApplyConfigurationResultFromDirectory(flagValues.OutputDirectory, nil)
+	return libraryapplyconfiguration.NewApplyConfigurationResultFromDirectory(
+		os.DirFS(flagValues.OutputDirectory),
+		flagValues.OutputDirectory,
+		nil)
 }
