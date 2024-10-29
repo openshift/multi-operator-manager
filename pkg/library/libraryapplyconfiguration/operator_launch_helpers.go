@@ -10,6 +10,8 @@ import (
 	"github.com/openshift/library-go/pkg/controller/factory"
 	"github.com/openshift/library-go/pkg/manifestclient"
 	"github.com/openshift/library-go/pkg/operator/events"
+
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 )
 
@@ -23,6 +25,9 @@ type SimpleOperatorStarter struct {
 	ControllerNamedRunOnceFns []NamedRunOnce
 	// ControllerRunFns is useful during a transition to coalesce the operator launching flow.
 	ControllerRunFns []RunFunc
+	// ControllersToRun holds an optional list of controller names to run.
+	// By default, all controllers are run.
+	ControllersToRun []string
 }
 
 var (
@@ -42,11 +47,24 @@ func (a SimpleOperatorStarter) RunOnce(ctx context.Context) error {
 		informer.WaitForCacheSync(ctx)
 	}
 
-	errs := []error{}
-
+	knownControllersSet := sets.NewString()
 	for _, controllerRunner := range a.ControllerNamedRunOnceFns {
-		// TODO add timeout.
+		knownControllersSet.Insert(controllerRunner.ControllerInstanceName())
+	}
+	controllersToRunSet := sets.NewString(a.ControllersToRun...)
+	if controllersToRunSet.Len() == 0 {
+		controllersToRunSet = knownControllersSet
+	}
+	if unknownControllersToRun := controllersToRunSet.Difference(knownControllersSet); len(unknownControllersToRun) > 0 {
+		return fmt.Errorf("requested unknown controllers to be run: %v, known controllers: %v", unknownControllersToRun.List(), knownControllersSet.List())
+	}
+
+	errs := []error{}
+	for _, controllerRunner := range a.ControllerNamedRunOnceFns {
 		func() {
+			if !controllersToRunSet.Has(controllerRunner.ControllerInstanceName()) {
+				return
+			}
 			localCtx, localCancel := context.WithTimeout(ctx, 1*time.Second)
 			defer localCancel()
 			localCtx = manifestclient.WithControllerNameInContext(localCtx, controllerRunner.ControllerInstanceName())
