@@ -3,7 +3,6 @@ package sampleapplyconfiguration
 import (
 	"context"
 	"fmt"
-	"github.com/openshift/library-go/pkg/manifestclient"
 	"os"
 	"time"
 
@@ -13,12 +12,14 @@ import (
 	applyoperatorv1 "github.com/openshift/client-go/operator/applyconfigurations/operator/v1"
 	operatorclient "github.com/openshift/client-go/operator/clientset/versioned"
 	operatorinformer "github.com/openshift/client-go/operator/informers/externalversions"
+	"github.com/openshift/library-go/pkg/manifestclient"
 	"github.com/openshift/library-go/pkg/operator/events"
 	"github.com/openshift/library-go/pkg/operator/genericoperatorclient"
 	"github.com/openshift/library-go/pkg/operator/resourcesynccontroller"
 	"github.com/openshift/library-go/pkg/operator/status"
 	"github.com/openshift/library-go/pkg/operator/v1helpers"
 	"github.com/openshift/multi-operator-manager/pkg/library/libraryapplyconfiguration"
+
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -52,6 +53,10 @@ type exampleOperatorInput struct {
 	eventRecorder         events.Recorder
 
 	informers []libraryapplyconfiguration.SimplifiedInformerFactory
+
+	// controllersToRun holds an optional list of controller names to run.
+	// By default, all controllers are run.
+	controllersToRun []string
 }
 
 const componentName = "cluster-example-operator"
@@ -107,12 +112,14 @@ func CreateOperatorInputFromMOM(ctx context.Context, momInput libraryapplyconfig
 		informers: []libraryapplyconfiguration.SimplifiedInformerFactory{
 			libraryapplyconfiguration.DynamicInformerFactoryAdapter(dynamicInformers), // we don't share the dynamic informers, but we only want to start when requested
 		},
+		controllersToRun: momInput.ControllersToRun,
 	}, nil
 }
 
 func CreateOperatorStarter(ctx context.Context, exampleOperatorInput *exampleOperatorInput) (libraryapplyconfiguration.OperatorStarter, error) {
 	ret := &libraryapplyconfiguration.SimpleOperatorStarter{
-		Informers: append([]libraryapplyconfiguration.SimplifiedInformerFactory{}, exampleOperatorInput.informers...),
+		Informers:        append([]libraryapplyconfiguration.SimplifiedInformerFactory{}, exampleOperatorInput.informers...),
+		ControllersToRun: exampleOperatorInput.controllersToRun,
 	}
 
 	// create informers. This one is common for control plane operators.
