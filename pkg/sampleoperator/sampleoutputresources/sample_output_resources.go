@@ -10,11 +10,11 @@ func SampleRunOutputResources(ctx context.Context) (*libraryoutputresources.Outp
 	return &libraryoutputresources.OutputResources{
 		ConfigurationResources: libraryoutputresources.ResourceList{
 			ExactResources: []libraryoutputresources.ExactResourceID{
-				libraryoutputresources.ExactResource("config.openshift.io", "ingresses", "", "cluster"),
+				libraryoutputresources.ExactConfigResource("ingresses"),
 			}},
 		ManagementResources: libraryoutputresources.ResourceList{
 			ExactResources: []libraryoutputresources.ExactResourceID{
-				libraryoutputresources.ExactResource("operator.openshift.io", "authentications", "", "cluster"),
+				libraryoutputresources.ExactLowLevelOperator("authentications"),
 			},
 			EventingNamespaces: []string{
 				"openshift-example-operator",
@@ -22,7 +22,7 @@ func SampleRunOutputResources(ctx context.Context) (*libraryoutputresources.Outp
 		},
 		UserWorkloadResources: libraryoutputresources.ResourceList{
 			ExactResources: []libraryoutputresources.ExactResourceID{
-				libraryoutputresources.ExactResource("oauth.openshift.io", "oauthclients", "", "openshift-browser-client"),
+				libraryoutputresources.ExactResource("oauth.openshift.io", "v1", "oauthclients", "", "openshift-browser-client"),
 			},
 		},
 	}, nil
