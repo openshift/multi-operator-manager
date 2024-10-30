@@ -54,9 +54,9 @@ type exampleOperatorInput struct {
 
 	informers []libraryapplyconfiguration.SimplifiedInformerFactory
 
-	// controllersToRun holds an optional list of controller names to run.
+	// controllers holds an optional list of controller names to run.
 	// By default, all controllers are run.
-	controllersToRun []string
+	controllers []string
 }
 
 const componentName = "cluster-example-operator"
@@ -112,14 +112,14 @@ func CreateOperatorInputFromMOM(ctx context.Context, momInput libraryapplyconfig
 		informers: []libraryapplyconfiguration.SimplifiedInformerFactory{
 			libraryapplyconfiguration.DynamicInformerFactoryAdapter(dynamicInformers), // we don't share the dynamic informers, but we only want to start when requested
 		},
-		controllersToRun: momInput.ControllersToRun,
+		controllers: momInput.Controllers,
 	}, nil
 }
 
 func CreateOperatorStarter(ctx context.Context, exampleOperatorInput *exampleOperatorInput) (libraryapplyconfiguration.OperatorStarter, error) {
 	ret := &libraryapplyconfiguration.SimpleOperatorStarter{
-		Informers:        append([]libraryapplyconfiguration.SimplifiedInformerFactory{}, exampleOperatorInput.informers...),
-		ControllersToRun: exampleOperatorInput.controllersToRun,
+		Informers:   append([]libraryapplyconfiguration.SimplifiedInformerFactory{}, exampleOperatorInput.informers...),
+		Controllers: exampleOperatorInput.controllers,
 	}
 
 	// create informers. This one is common for control plane operators.

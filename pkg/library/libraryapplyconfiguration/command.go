@@ -28,9 +28,9 @@ type ApplyConfigurationInput struct {
 	// Streams is for I/O.  The StdIn will usually be nil'd out.
 	Streams genericiooptions.IOStreams
 
-	// ControllersToRun holds an optional list of controller names to run.
+	// Controllers holds an optional list of controller names to run.
 	// By default, all controllers are run.
-	ControllersToRun []string
+	Controllers []string
 }
 
 // ApplyConfigurationFunc is a function called for applying configuration.
@@ -50,9 +50,9 @@ type applyConfigurationFlags struct {
 	// OutputDirectory is the directory to where output should be stored
 	outputDirectory string
 
-	// controllersToRun holds an optional list of controller names to run.
+	// controllers hold an optional list of controller names to run.
 	// By default, all controllers are run.
-	controllersToRun []string
+	controllers []string
 
 	now time.Time
 
@@ -105,7 +105,7 @@ func newApplyConfigurationCommand(applyConfigurationFn ApplyConfigurationFunc, o
 func (f *applyConfigurationFlags) BindFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&f.inputDirectory, "input-dir", f.inputDirectory, "The directory where the resource input is stored.")
 	flags.StringVar(&f.outputDirectory, "output-dir", f.outputDirectory, "The directory where the output is stored.")
-	flags.StringSliceVar(&f.controllersToRun, "controllers-to-run", f.controllersToRun, "An optional list of controller names to run. By default, all controllers are run.")
+	flags.StringSliceVar(&f.controllers, "controllers", f.controllers, "An optional list of controller names to run. By default, all controllers are run.")
 	nowFlag := flagtypes.NewTimeValue(f.now, &f.now, []string{time.RFC3339})
 	flags.Var(nowFlag, "now", "The time to use time.Now during this execution.")
 }
@@ -128,7 +128,7 @@ func (f *applyConfigurationFlags) ToOptions(ctx context.Context) (*applyConfigur
 	input := ApplyConfigurationInput{
 		MutationTrackingClient: momClient,
 		Clock:                  clocktesting.NewFakeClock(f.now),
-		ControllersToRun:       f.controllersToRun,
+		Controllers:            f.controllers,
 		Streams:                f.streams,
 	}
 

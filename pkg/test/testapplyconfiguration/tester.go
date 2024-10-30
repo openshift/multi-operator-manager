@@ -144,7 +144,7 @@ func (o *TestApplyConfigurationOptions) Run(ctx context.Context) error {
 }
 
 func (test *TestOptions) runTest(ctx context.Context) *junitapi.JUnitTestCase {
-	junitTestName := fmt.Sprintf("%v [Binary:%q] [ControllersToRun:%q] [Directory:%q]", test.Description.TestName, test.Description.BinaryName, test.Description.ControllersToRun, test.TestDirectory)
+	junitTestName := fmt.Sprintf("%v [Binary:%q] [Controllers:%q] [Directory:%q]", test.Description.TestName, test.Description.BinaryName, test.Description.Controllers, test.TestDirectory)
 	currJunit := &junitapi.JUnitTestCase{
 		Name: junitTestName,
 	}
@@ -160,10 +160,10 @@ func (test *TestOptions) runTest(ctx context.Context) *junitapi.JUnitTestCase {
 
 	inputDir := filepath.Join(test.TestDirectory, "input-dir")
 	args := applyconfiguration.ApplyConfigurationFlagValues{
-		InputDirectory:   inputDir,
-		OutputDirectory:  test.OutputDirectory,
-		Now:              test.Description.Now.Time,
-		ControllersToRun: test.Description.ControllersToRun,
+		InputDirectory:  inputDir,
+		OutputDirectory: test.OutputDirectory,
+		Now:             test.Description.Now.Time,
+		Controllers:     test.Description.Controllers,
 	}
 	actualResult, execErr := applyconfiguration.ExecApplyConfiguration(ctx, test.Description.BinaryName, args)
 	endTime := now()

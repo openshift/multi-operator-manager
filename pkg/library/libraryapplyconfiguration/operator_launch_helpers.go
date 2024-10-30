@@ -25,9 +25,9 @@ type SimpleOperatorStarter struct {
 	ControllerNamedRunOnceFns []NamedRunOnce
 	// ControllerRunFns is useful during a transition to coalesce the operator launching flow.
 	ControllerRunFns []RunFunc
-	// ControllersToRun holds an optional list of controller names to run.
+	// Controllers hold an optional list of controller names to run.
 	// By default, all controllers are run.
-	ControllersToRun []string
+	Controllers []string
 }
 
 var (
@@ -51,7 +51,7 @@ func (a SimpleOperatorStarter) RunOnce(ctx context.Context) error {
 	for _, controllerRunner := range a.ControllerNamedRunOnceFns {
 		knownControllersSet.Insert(controllerRunner.ControllerInstanceName())
 	}
-	controllersToRunSet := sets.NewString(a.ControllersToRun...)
+	controllersToRunSet := sets.NewString(a.Controllers...)
 	if controllersToRunSet.Len() == 0 {
 		controllersToRunSet = knownControllersSet
 	}

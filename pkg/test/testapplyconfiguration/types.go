@@ -14,9 +14,9 @@ type TestDescription struct {
 	// Now is the time to use when invoking the apply-configuration command.  This is commonly used so that output
 	// for conditions is stable
 	Now metav1.Time `json:"now"`
-	// ControllersToRun holds an optional list of controller names to run.
+	// Controllers hold an optional list of controller names to run.
 	// By default, all controllers are run.
-	ControllersToRun []string `json:"controllersToRun,omitempty"`
+	Controllers []string `json:"controllers,omitempty"`
 }
 
 type TestType string

@@ -1,6 +1,6 @@
 binaryName: ./sample-operator
 testName: test controller name
-controllersToRun:
+controllers:
   - "ingress-creator"
 description: >
   Test if specifying a controller name works.
