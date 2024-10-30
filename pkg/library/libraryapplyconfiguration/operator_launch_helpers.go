@@ -48,9 +48,18 @@ func (a SimpleOperatorStarter) RunOnce(ctx context.Context) error {
 	}
 
 	knownControllersSet := sets.NewString()
+	duplicateControllerNames := []string{}
 	for _, controllerRunner := range a.ControllerNamedRunOnceFns {
+		if knownControllersSet.Has(controllerRunner.ControllerInstanceName()) {
+			duplicateControllerNames = append(duplicateControllerNames, controllerRunner.ControllerInstanceName())
+			continue
+		}
 		knownControllersSet.Insert(controllerRunner.ControllerInstanceName())
 	}
+	if len(duplicateControllerNames) > 0 {
+		return fmt.Errorf("the following controllers were requested to run multiple times: %v", duplicateControllerNames)
+	}
+
 	controllersToRunSet := sets.NewString(a.Controllers...)
 	if controllersToRunSet.Len() == 0 {
 		controllersToRunSet = knownControllersSet
