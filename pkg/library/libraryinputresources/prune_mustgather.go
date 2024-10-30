@@ -87,6 +87,18 @@ func GetRequiredInputResourcesForResourceList(ctx context.Context, resourceList 
 		instances = append(instances, resourceInstance)
 	}
 
+	for _, currResource := range resourceList.LabelSelectedResources {
+		resourceList, err := getResourcesByLabelSelector(ctx, dynamicClient, currResource)
+		if apierrors.IsNotFound(err) {
+			continue
+		}
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		instances = append(instances, resourceList...)
+	}
+
 	path := field.NewPath(".")
 	for i, currResourceRef := range resourceList.ResourceReference {
 		currFieldPath := path.Child("resourceReference").Index(i)
@@ -165,6 +177,40 @@ func getExactResource(ctx context.Context, dynamicClient dynamic.Interface, reso
 		Content:      unstructuredInstance,
 	}
 	return resourceInstance, nil
+}
+
+func getResourcesByLabelSelector(ctx context.Context, dynamicClient dynamic.Interface, labelSelectedResource LabelSelectedResource) ([]*Resource, error) {
+	gvr := schema.GroupVersionResource{
+		Group:    labelSelectedResource.Group,
+		Version:  labelSelectedResource.Version,
+		Resource: labelSelectedResource.Resource,
+	}
+
+	selector, err := metav1.LabelSelectorAsSelector(&labelSelectedResource.LabelSelector)
+	if err != nil {
+		return nil, err
+	}
+
+	namespace := labelSelectedResource.Namespace
+	if namespace == "" {
+		namespace = metav1.NamespaceAll
+	}
+
+	unstructuredList, err := dynamicClient.Resource(gvr).Namespace(namespace).List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
+	if err != nil {
+		return nil, fmt.Errorf("failed getting list of resources with labelSelector %q: %w", selector, err)
+	}
+
+	var resources []*Resource
+	for _, item := range unstructuredList.Items {
+		resourceInstance := &Resource{
+			ResourceType: gvr,
+			Content:      &item,
+		}
+		resources = append(resources, resourceInstance)
+	}
+
+	return resources, nil
 }
 
 func IdentifierForExactResourceRef(resourceReference *ExactResourceID) string {

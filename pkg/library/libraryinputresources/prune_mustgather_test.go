@@ -4,9 +4,10 @@ import (
 	"context"
 	"os"
 	"path"
-	"sigs.k8s.io/yaml"
 	"strings"
 	"testing"
+
+	"sigs.k8s.io/yaml"
 )
 
 func TestGetRequiredResourcesFromMustGather(t *testing.T) {
