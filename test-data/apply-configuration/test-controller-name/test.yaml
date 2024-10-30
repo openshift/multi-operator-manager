@@ -1,0 +1,8 @@
+binaryName: ./sample-operator
+testName: test controller name
+controllers:
+  - "ingress-creator"
+description: >
+  Test if specifying a controller name works.
+testType: ApplyConfiguration
+now: 2024-10-14T22:38:20Z
