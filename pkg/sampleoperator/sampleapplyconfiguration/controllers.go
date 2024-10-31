@@ -39,6 +39,7 @@ func NewDemoController(
 		WithSync(c.Sync).
 		WithInformers(kubeConfigMapInformer.Informer()).
 		ResyncEvery(time.Minute).
+		WithControllerInstanceName(c.controllerInstanceName).
 		ToController(
 			"Demo",
 			eventRecorder.WithComponentSuffix(c.controllerInstanceName),
@@ -65,10 +66,6 @@ func (c *demoController) Sync(ctx context.Context, _ factory.SyncContext) error 
 	klog.Infof("Updating the sync counter to %d for %s configmap in %s namspace", counter, configMap.Name, configMap.Namespace)
 	_, err = c.kubeClient.CoreV1().ConfigMaps("openshift-authentication").Update(ctx, configMap, metav1.UpdateOptions{})
 	return err
-}
-
-func (c *demoController) ControllerInstanceName() string {
-	return c.controllerInstanceName
 }
 
 func makeConfigMap(name string) *corev1.ConfigMap {
