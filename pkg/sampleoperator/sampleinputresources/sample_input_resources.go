@@ -2,7 +2,6 @@ package sampleinputresources
 
 import (
 	"context"
-
 	"github.com/openshift/multi-operator-manager/pkg/library/libraryinputresources"
 )
 
@@ -16,6 +15,7 @@ func SampleRunInputResources(ctx context.Context) (*libraryinputresources.InputR
 				libraryinputresources.ExactConfigResource("consoles"),
 				libraryinputresources.ExactConfigResource("oauths"),
 				libraryinputresources.ExactConfigMap("openshift-authentication", "fail-check"),
+				libraryinputresources.ExactConfigMap("openshift-authentication", "foo"),
 			},
 			ResourceReference: []libraryinputresources.ResourceReference{
 				{
