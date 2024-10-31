@@ -195,6 +195,15 @@ func CreateOperatorStarter(ctx context.Context, exampleOperatorInput *exampleOpe
 		},
 	))
 
+	demoController := NewDemoController(
+		"sample-operator",
+		exampleOperatorInput.kubeClient,
+		kubeInformersForNamespaces.InformersFor("openshift-authentication").Core().V1().ConfigMaps(),
+		exampleOperatorInput.eventRecorder,
+	)
+	ret.ControllerNamedRunOnceFns = append(ret.ControllerNamedRunOnceFns,
+		libraryapplyconfiguration.AdaptSyncFn(exampleOperatorInput.eventRecorder, demoController.Name(), demoController.Sync))
+
 	return ret, nil
 }
 

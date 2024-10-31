@@ -23,6 +23,7 @@ func SampleRunOutputResources(ctx context.Context) (*libraryoutputresources.Outp
 		UserWorkloadResources: libraryoutputresources.ResourceList{
 			ExactResources: []libraryoutputresources.ExactResourceID{
 				libraryoutputresources.ExactResource("oauth.openshift.io", "v1", "oauthclients", "", "openshift-browser-client"),
+				libraryoutputresources.ExactConfigMap("openshift-authentication", "foo"),
 			},
 		},
 	}, nil

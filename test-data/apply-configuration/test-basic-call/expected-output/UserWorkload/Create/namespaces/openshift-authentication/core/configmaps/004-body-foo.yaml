@@ -1,0 +1,10 @@
+apiVersion: v1
+data:
+  counter: "1"
+kind: ConfigMap
+metadata:
+  annotations:
+    operator.openshift.io/controller-name: Demo
+  creationTimestamp: null
+  name: foo
+  namespace: openshift-authentication
