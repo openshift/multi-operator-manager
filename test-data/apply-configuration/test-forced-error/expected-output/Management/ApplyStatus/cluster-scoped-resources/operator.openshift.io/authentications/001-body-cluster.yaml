@@ -2,7 +2,7 @@ apiVersion: operator.openshift.io/v1
 kind: Authentication
 metadata:
   annotations:
-    operator.openshift.io/controller-name: example-ResourceSync
+    synthetic.mom.openshift.io/controller-instance-name: example-ResourceSync
   name: cluster
 status:
   conditions:
