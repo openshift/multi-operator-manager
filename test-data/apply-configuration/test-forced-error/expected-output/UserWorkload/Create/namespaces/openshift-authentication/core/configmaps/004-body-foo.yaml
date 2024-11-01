@@ -4,7 +4,7 @@ data:
 kind: ConfigMap
 metadata:
   annotations:
-    operator.openshift.io/controller-name: Demo
+    synthetic.mom.openshift.io/controller-instance-name: Demo
   creationTimestamp: null
   name: foo
   namespace: openshift-authentication

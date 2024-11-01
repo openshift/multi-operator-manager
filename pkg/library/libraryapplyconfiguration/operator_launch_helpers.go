@@ -76,7 +76,7 @@ func (a SimpleOperatorStarter) RunOnce(ctx context.Context) error {
 			}
 			localCtx, localCancel := context.WithTimeout(ctx, 1*time.Second)
 			defer localCancel()
-			localCtx = manifestclient.WithControllerNameInContext(localCtx, controllerRunner.ControllerInstanceName())
+			localCtx = manifestclient.WithControllerInstanceNameFromContext(localCtx, controllerRunner.ControllerInstanceName())
 			if err := controllerRunner.RunOnce(localCtx); err != nil {
 				errs = append(errs, fmt.Errorf("controller %q failed: %w", controllerRunner.ControllerInstanceName(), err))
 			}
