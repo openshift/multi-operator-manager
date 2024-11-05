@@ -3,13 +3,16 @@ package libraryapplyconfiguration
 import (
 	"context"
 	"fmt"
-	"github.com/openshift/multi-operator-manager/pkg/library/libraryoutputresources"
+	"math/rand"
 	"time"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	"github.com/openshift/library-go/pkg/manifestclient"
 	"github.com/openshift/multi-operator-manager/pkg/flagtypes"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
+	"github.com/openshift/multi-operator-manager/pkg/library/libraryoutputresources"
+
 	"k8s.io/cli-runtime/pkg/genericiooptions"
 	"k8s.io/utils/clock"
 	clocktesting "k8s.io/utils/clock/testing"
@@ -90,6 +93,7 @@ func newApplyConfigurationCommand(applyConfigurationFn ApplyConfigurationFunc, o
 			if err != nil {
 				return err
 			}
+			rand.New(rand.NewSource(o.input.Clock.Now().UTC().UnixNano()))
 			if err := o.Run(ctx); err != nil {
 				return err
 			}
