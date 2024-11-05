@@ -31,8 +31,7 @@ type ApplyConfigurationInput struct {
 	// Streams is for I/O.  The StdIn will usually be nil'd out.
 	Streams genericiooptions.IOStreams
 
-	// Controllers holds an optional list of controller names to run.
-	// By default, all controllers are run.
+	// Controllers holds a list of controller names to run.
 	Controllers []string
 }
 
@@ -54,7 +53,9 @@ type applyConfigurationFlags struct {
 	outputDirectory string
 
 	// controllers hold an optional list of controller names to run.
-	// By default, all controllers are run.
+	// '*' means "all controllers are enabled by default"
+	// 'foo' means "enable 'foo'"
+	// '-foo' means "disable 'foo'"
 	controllers []string
 
 	now time.Time
@@ -109,7 +110,7 @@ func newApplyConfigurationCommand(applyConfigurationFn ApplyConfigurationFunc, o
 func (f *applyConfigurationFlags) BindFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&f.inputDirectory, "input-dir", f.inputDirectory, "The directory where the resource input is stored.")
 	flags.StringVar(&f.outputDirectory, "output-dir", f.outputDirectory, "The directory where the output is stored.")
-	flags.StringSliceVar(&f.controllers, "controllers", f.controllers, "An optional list of controller names to run. By default, all controllers are run.")
+	flags.StringSliceVar(&f.controllers, "controllers", []string{"*"}, "A list of controllers to enable. '*' enables all controllers, 'foo' enables the controller named 'foo', '-foo' disables the controller named 'foo'. Default: `*`")
 	nowFlag := flagtypes.NewTimeValue(f.now, &f.now, []string{time.RFC3339})
 	flags.Var(nowFlag, "now", "The time to use time.Now during this execution.")
 }
