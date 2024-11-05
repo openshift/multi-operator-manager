@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"reflect"
 	"time"
 
@@ -68,6 +69,7 @@ func (a SimpleOperatorStarter) RunOnce(ctx context.Context) error {
 		return fmt.Errorf("requested unknown controllers to be run: %v, known controllers: %v", unknownControllersToRun.List(), knownControllersSet.List())
 	}
 
+	shuffleNamedRunOnce(a.ControllerNamedRunOnceFns)
 	errs := []error{}
 	for _, controllerRunner := range a.ControllerNamedRunOnceFns {
 		func() {
@@ -199,4 +201,10 @@ func (g generatedNamespacedInformerFactory) Start(ctx context.Context) {
 
 func (g generatedNamespacedInformerFactory) WaitForCacheSync(ctx context.Context) {
 	g.delegate.WaitForCacheSync(ctx.Done())
+}
+
+func shuffleNamedRunOnce(controllers []NamedRunOnce) {
+	rand.Shuffle(len(controllers), func(i, j int) {
+		controllers[i], controllers[j] = controllers[j], controllers[i]
+	})
 }
