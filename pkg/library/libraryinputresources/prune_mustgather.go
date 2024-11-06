@@ -72,7 +72,7 @@ func NewDynamicClientFromMustGather(mustGatherDir string) (dynamic.Interface, er
 var builder = gval.Full(jsonpath.Language())
 
 func GetRequiredInputResourcesForResourceList(ctx context.Context, resourceList ResourceList, dynamicClient dynamic.Interface) ([]*Resource, error) {
-	instances := []*Resource{}
+	instances := NewUniqueResourceSet()
 	errs := []error{}
 
 	for _, currResource := range resourceList.ExactResources {
@@ -84,7 +84,7 @@ func GetRequiredInputResourcesForResourceList(ctx context.Context, resourceList 
 			errs = append(errs, err)
 			continue
 		}
-		instances = append(instances, resourceInstance)
+		instances.Insert(resourceInstance)
 	}
 
 	for _, currResource := range resourceList.LabelSelectedResources {
@@ -96,7 +96,7 @@ func GetRequiredInputResourcesForResourceList(ctx context.Context, resourceList 
 			errs = append(errs, err)
 			continue
 		}
-		instances = append(instances, resourceList...)
+		instances.Insert(resourceList...)
 	}
 
 	path := field.NewPath(".")
@@ -157,12 +157,12 @@ func GetRequiredInputResourcesForResourceList(ctx context.Context, resourceList 
 					continue
 				}
 
-				instances = append(instances, resourceInstance)
+				instances.Insert(resourceInstance)
 			}
 		}
 	}
 
-	return instances, errors.Join(errs...)
+	return instances.List(), errors.Join(errs...)
 }
 
 func getExactResource(ctx context.Context, dynamicClient dynamic.Interface, resourceReference ExactResourceID) (*Resource, error) {
