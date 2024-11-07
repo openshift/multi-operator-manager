@@ -6,13 +6,11 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-
 	"github.com/openshift/library-go/pkg/manifestclient"
 	"github.com/openshift/multi-operator-manager/pkg/flagtypes"
 	"github.com/openshift/multi-operator-manager/pkg/library/libraryoutputresources"
-
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"k8s.io/cli-runtime/pkg/genericiooptions"
 	"k8s.io/utils/clock"
 	clocktesting "k8s.io/utils/clock/testing"

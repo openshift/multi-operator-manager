@@ -1,5 +1,9 @@
 package libraryinputresources
 
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
 // InputResources contains the items that an operator needs to make a decision about what needs to be create,
 // modified, or removed.
 type InputResources struct {
@@ -16,9 +20,20 @@ type ResourceList struct {
 
 	GeneratedNameResources []GeneratedResourceID `json:"generatedNameResource,omitempty"`
 
+	LabelSelectedResources []LabelSelectedResource `json:"labelSelectedResources,omitempty"`
+
 	// use resourceReferences when one resource (apiserver.config.openshift.io/cluster) refers to another resource
 	// like a secret (.spec.servingCerts.namedCertificates[*].servingCertificates.name).
 	ResourceReference []ResourceReference `json:"resourceReferences,omitempty"`
+}
+
+type LabelSelectedResource struct {
+	InputResourceTypeIdentifier `json:",inline"`
+
+	Namespace string `json:"namespace,omitempty"`
+
+	// validation prevents setting matchExpressions
+	LabelSelector metav1.LabelSelector `json:"labelSelector"`
 }
 
 type OperandResourceList struct {

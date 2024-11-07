@@ -1,0 +1,16 @@
+applyConfigurationResources:
+  labelSelectedResources:
+    - group: # should be converted to core
+      version: v1
+      resource: configmaps
+      namespace: openshift-oauth-apiserver
+      labelSelector:
+        matchLabels:
+          operator.openshift.io/controller-instance-name: oauth-apiserver-RevisionController
+    - group: # should be converted to core
+      version: v1
+      resource: secrets
+      namespace: openshift-oauth-apiserver
+      labelSelector:
+        matchLabels:
+          operator.openshift.io/controller-instance-name: oauth-apiserver-RevisionController

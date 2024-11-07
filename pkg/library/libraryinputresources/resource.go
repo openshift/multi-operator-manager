@@ -8,12 +8,14 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
-	"sigs.k8s.io/yaml"
 	"strings"
+
+	"sigs.k8s.io/yaml"
 
 	"github.com/google/go-cmp/cmp"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 // TODO this is a good target to move to library-go so we all agree how to reference these.
@@ -21,6 +23,15 @@ type Resource struct {
 	Filename     string
 	ResourceType schema.GroupVersionResource
 	Content      *unstructured.Unstructured
+}
+
+func (r Resource) ID() string {
+	name := r.Content.GetName()
+	namespace := r.Content.GetNamespace()
+	if namespace == "" {
+		namespace = "_cluster_scoped_resource_"
+	}
+	return fmt.Sprintf("%s/%s/%s/%s", r.ResourceType.Group, r.ResourceType.Resource, namespace, name)
 }
 
 func LenientResourcesFromDirRecursive(location string) ([]*Resource, error) {
@@ -145,4 +156,35 @@ func findResource(in []*Resource, filename string) *Resource {
 	}
 
 	return nil
+}
+
+func NewUniqueResourceSet(resources ...*Resource) *UniqueResourceSet {
+	u := &UniqueResourceSet{
+		seen:      sets.New[string](),
+		resources: []*Resource{},
+	}
+	u.Insert(resources...)
+	return u
+}
+
+type UniqueResourceSet struct {
+	seen      sets.Set[string]
+	resources []*Resource
+}
+
+func (u *UniqueResourceSet) Insert(resources ...*Resource) {
+	for _, resource := range resources {
+		if resource == nil {
+			continue
+		}
+		if u.seen.Has(resource.ID()) {
+			continue
+		}
+		u.resources = append(u.resources, resource)
+		u.seen.Insert(resource.ID())
+	}
+}
+
+func (u *UniqueResourceSet) List() []*Resource {
+	return u.resources
 }

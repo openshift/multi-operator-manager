@@ -2,7 +2,9 @@ package sampleinputresources
 
 import (
 	"context"
+
 	"github.com/openshift/multi-operator-manager/pkg/library/libraryinputresources"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func SampleRunInputResources(ctx context.Context) (*libraryinputresources.InputResources, error) {
@@ -16,6 +18,30 @@ func SampleRunInputResources(ctx context.Context) (*libraryinputresources.InputR
 				libraryinputresources.ExactConfigResource("oauths"),
 				libraryinputresources.ExactConfigMap("openshift-authentication", "fail-check"),
 				libraryinputresources.ExactConfigMap("openshift-authentication", "foo"),
+			},
+			LabelSelectedResources: []libraryinputresources.LabelSelectedResource{
+				{
+					InputResourceTypeIdentifier: libraryinputresources.InputResourceTypeIdentifier{
+						Group:    "",
+						Version:  "v1",
+						Resource: "configmaps",
+					},
+					Namespace: "openshift-oauth-apiserver",
+					LabelSelector: metav1.LabelSelector{
+						MatchLabels: map[string]string{"operator.openshift.io/controller-instance-name": "oauth-apiserver-RevisionController"},
+					},
+				},
+				{
+					InputResourceTypeIdentifier: libraryinputresources.InputResourceTypeIdentifier{
+						Group:    "",
+						Version:  "v1",
+						Resource: "secrets",
+					},
+					Namespace: "openshift-oauth-apiserver",
+					LabelSelector: metav1.LabelSelector{
+						MatchLabels: map[string]string{"operator.openshift.io/controller-instance-name": "oauth-apiserver-RevisionController"},
+					},
+				},
 			},
 			ResourceReference: []libraryinputresources.ResourceReference{
 				{
