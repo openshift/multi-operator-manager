@@ -162,6 +162,30 @@ func AdaptSyncFn(eventRecorder events.Recorder, controllerName string, originalR
 	})
 }
 
+type Syncer interface {
+	Sync(ctx context.Context, controllerContext factory.SyncContext) error
+}
+
+type ControllerWithInstanceName interface {
+	ControllerInstanceName() string
+}
+
+func AdaptNamedController(eventRecorder events.Recorder, controller Syncer) NamedRunOnce {
+	controllerWithInstanceName, ok := controller.(ControllerWithInstanceName)
+	if !ok {
+		panic(fmt.Sprintf("%T doesn't expose ControllerInstanceName() method which is required", controller))
+	}
+	controllerInstanceName := controllerWithInstanceName.ControllerInstanceName()
+	if len(controllerInstanceName) == 0 {
+		panic(fmt.Sprintf("%T cannot return an empty ControllerInstanceName", controller))
+	}
+
+	return NewNamedRunOnce(controllerInstanceName, func(ctx context.Context) error {
+		syncCtx := factory.NewSyncContext("run-named-once-sync-context", eventRecorder)
+		return controller.Sync(ctx, syncCtx)
+	})
+}
+
 type generatedInformerFactory struct {
 	delegate GeneratedInformerFactory
 }

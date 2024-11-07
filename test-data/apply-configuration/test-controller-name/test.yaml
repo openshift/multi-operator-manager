@@ -1,7 +1,7 @@
 binaryName: ./sample-operator
 testName: test controller name
 controllers:
-  - "ingress-creator"
+  - "sample-operator-ingress-creator"
 description: >
   Test if specifying a controller name works.
 testType: ApplyConfiguration

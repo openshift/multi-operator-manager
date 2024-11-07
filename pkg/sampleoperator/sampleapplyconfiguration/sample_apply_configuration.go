@@ -154,7 +154,7 @@ func CreateOperatorStarter(ctx context.Context, exampleOperatorInput *exampleOpe
 	versionRecorder.SetVersion("operator", os.Getenv("OPERATOR_IMAGE_VERSION"))
 
 	resourceSyncer := resourcesynccontroller.NewResourceSyncController(
-		"example",
+		"sample-operator-example",
 		exampleOperatorInput.exampleOperatorClient,
 		kubeInformersForNamespaces,
 		v1helpers.CachedSecretGetter(exampleOperatorInput.kubeClient.CoreV1(), kubeInformersForNamespaces),
@@ -168,7 +168,7 @@ func CreateOperatorStarter(ctx context.Context, exampleOperatorInput *exampleOpe
 	// the good example was above, now just add a few resources for us to play with
 
 	ret.ControllerNamedRunOnceFns = append(ret.ControllerNamedRunOnceFns, libraryapplyconfiguration.NewNamedRunOnce(
-		"ingress-creator",
+		"sample-operator-ingress-creator",
 		func(ctx context.Context) error {
 			exampleOperatorInput.configClient.ConfigV1().Ingresses().Create(ctx, &configv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: "cluster"}}, metav1.CreateOptions{})
 			return nil
@@ -178,7 +178,7 @@ func CreateOperatorStarter(ctx context.Context, exampleOperatorInput *exampleOpe
 	// this ensures the configmapinformer is requested so that it will start.
 	kubeInformersForNamespaces.ConfigMapLister().ConfigMaps("openshift-authentication")
 	ret.ControllerNamedRunOnceFns = append(ret.ControllerNamedRunOnceFns, libraryapplyconfiguration.NewNamedRunOnce(
-		"failure-generator",
+		"sample-operator-failure-generator",
 		func(ctx context.Context) error {
 			exampleOperatorInput.eventRecorder.Event("must", "event")
 			_, err := kubeInformersForNamespaces.ConfigMapLister().ConfigMaps("openshift-authentication").Get("fail-check")
@@ -202,7 +202,7 @@ func CreateOperatorStarter(ctx context.Context, exampleOperatorInput *exampleOpe
 		exampleOperatorInput.eventRecorder,
 	)
 	ret.ControllerNamedRunOnceFns = append(ret.ControllerNamedRunOnceFns,
-		libraryapplyconfiguration.AdaptSyncFn(exampleOperatorInput.eventRecorder, demoController.Name(), demoController.Sync))
+		libraryapplyconfiguration.AdaptNamedController(exampleOperatorInput.eventRecorder, demoController))
 
 	return ret, nil
 }
