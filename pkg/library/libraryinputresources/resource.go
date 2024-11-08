@@ -200,3 +200,27 @@ func (u *UniqueResourceSet) Insert(resources ...*Resource) {
 func (u *UniqueResourceSet) List() []*Resource {
 	return u.resources
 }
+
+// DifferenceOfResources returns a slice of Resource objects that are in lhses but not in rhses.
+// Resources are compared by their IDs, rather than a full object comparison,
+// to account for potentially incomplete data in objects.
+// For example:
+// lhses = {a1, a2, a3}
+// rhses = {a1, a2, a4, a5}
+// DifferenceOfResources(lhses, rhses) = {a3}
+func DifferenceOfResources(lhses, rhses []*Resource) []*Resource {
+	ret := []*Resource{}
+	for i := range lhses {
+		found := false
+		for j := range rhses {
+			if lhses[i].ID() == rhses[j].ID() {
+				found = true
+				break
+			}
+		}
+		if !found {
+			ret = append(ret, lhses[i])
+		}
+	}
+	return ret
+}
