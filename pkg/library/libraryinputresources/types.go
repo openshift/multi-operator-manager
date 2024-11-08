@@ -18,13 +18,13 @@ type InputResources struct {
 type ResourceList struct {
 	ExactResources []ExactResourceID `json:"exactResources,omitempty"`
 
-	GeneratedNameResources []GeneratedResourceID `json:"generatedNameResource,omitempty"`
+	GeneratedNameResources []GeneratedResourceID `json:"generatedNameResources,omitempty"`
 
 	LabelSelectedResources []LabelSelectedResource `json:"labelSelectedResources,omitempty"`
 
 	// use resourceReferences when one resource (apiserver.config.openshift.io/cluster) refers to another resource
 	// like a secret (.spec.servingCerts.namedCertificates[*].servingCertificates.name).
-	ResourceReference []ResourceReference `json:"resourceReferences,omitempty"`
+	ResourceReferences []ResourceReference `json:"resourceReferences,omitempty"`
 }
 
 type LabelSelectedResource struct {

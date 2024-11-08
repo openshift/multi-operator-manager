@@ -51,7 +51,7 @@ func Test_validateInputResources(t *testing.T) {
 					ApplyConfigurationResources: ResourceList{},
 					OperandResources: OperandResourceList{
 						ConfigurationResources: ResourceList{
-							ResourceReference: []ResourceReference{
+							ResourceReferences: []ResourceReference{
 								{
 									ReferringResource: ExactResource("", "", "secrets", "foo", "bar"),
 									Type:              ImplicitNamespacedReferenceType,
@@ -78,7 +78,7 @@ func Test_validateInputResources(t *testing.T) {
 					ApplyConfigurationResources: ResourceList{},
 					OperandResources: OperandResourceList{
 						ConfigurationResources: ResourceList{
-							ResourceReference: []ResourceReference{
+							ResourceReferences: []ResourceReference{
 								{
 									ReferringResource: ExactSecret("foo", "bar"),
 									Type:              ImplicitNamespacedReferenceType,

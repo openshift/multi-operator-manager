@@ -100,7 +100,7 @@ func GetRequiredInputResourcesForResourceList(ctx context.Context, resourceList 
 	}
 
 	path := field.NewPath(".")
-	for i, currResourceRef := range resourceList.ResourceReference {
+	for i, currResourceRef := range resourceList.ResourceReferences {
 		currFieldPath := path.Child("resourceReference").Index(i)
 
 		referringGVR := schema.GroupVersionResource{Group: currResourceRef.ReferringResource.Group, Version: currResourceRef.ReferringResource.Version, Resource: currResourceRef.ReferringResource.Resource}
