@@ -43,7 +43,7 @@ func SampleRunInputResources(ctx context.Context) (*libraryinputresources.InputR
 					},
 				},
 			},
-			ResourceReference: []libraryinputresources.ResourceReference{
+			ResourceReferences: []libraryinputresources.ResourceReference{
 				{
 					ReferringResource: libraryinputresources.ExactConfigResource("ingresses"),
 					Type:              "ImplicitNamespacedReference",

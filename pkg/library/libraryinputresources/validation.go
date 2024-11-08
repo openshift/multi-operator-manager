@@ -30,7 +30,7 @@ func validateResourceList(path *field.Path, obj ResourceList) []error {
 	for i, curr := range obj.LabelSelectedResources {
 		errs = append(errs, validateLabelSelectedResources(path.Child("labelSelectedResources").Index(i), curr)...)
 	}
-	for i, curr := range obj.ResourceReference {
+	for i, curr := range obj.ResourceReferences {
 		errs = append(errs, validateResourceReference(path.Child("resourceReferences").Index(i), curr)...)
 	}
 
