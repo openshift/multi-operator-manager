@@ -1,0 +1,9 @@
+action: ApplyStatus
+controllerInstanceName: sample-operator-example-ResourceSync
+fieldManager: sample-operator-example-ResourceSync
+generateName: ""
+mame: cluster
+resourceType:
+  Group: operator.openshift.io
+  Resource: authentications
+  Version: v1

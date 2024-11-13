@@ -25,21 +25,25 @@ func TestNewApplyConfigurationFromClient(t *testing.T) {
 					ret.AddRequest(manifestclient.TrackedSerializedRequest{
 						RequestNumber: 1,
 						SerializedRequest: manifestclient.SerializedRequest{
-							Action: manifestclient.ActionApplyStatus,
-							ResourceType: schema.GroupVersionResource{
-								Group:    "",
-								Version:  "v1",
-								Resource: "secrets",
+							ActionMetadata: manifestclient.ActionMetadata{
+								Action: manifestclient.ActionApplyStatus,
+								ResourceMetadata: manifestclient.ResourceMetadata{
+									ResourceType: schema.GroupVersionResource{
+										Group:    "",
+										Version:  "v1",
+										Resource: "secrets",
+									},
+									Namespace: "foo",
+									Name:      "bar",
+								},
 							},
 							KindType: schema.GroupVersionKind{
 								Group:   "",
 								Version: "v1",
 								Kind:    "Secret",
 							},
-							Namespace: "foo",
-							Name:      "bar",
-							Options:   nil,
-							Body:      []byte(""),
+							Options: nil,
+							Body:    []byte(""),
 						},
 					})
 					return ret

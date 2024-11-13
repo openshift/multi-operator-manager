@@ -1,0 +1,9 @@
+action: Create
+controllerInstanceName: ""
+generateName: ""
+mame: example-operator.1807907bd33633d8
+namespace: openshift-example-operator
+resourceType:
+  Group: ""
+  Resource: events
+  Version: v1
