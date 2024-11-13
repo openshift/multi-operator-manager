@@ -1,0 +1,59 @@
+---
+apiVersion: config.openshift.io/v1
+items:
+- apiVersion: config.openshift.io/v1
+  kind: Ingress
+  metadata:
+    creationTimestamp: "2024-10-17T22:22:36Z"
+    generation: 1
+    name: cluster
+    resourceVersion: "31242"
+    uid: e0980fc4-e2af-4cea-abcb-ab9f6d166bd8
+  spec:
+    domain: apps.ostest.test.metalkube.org
+    loadBalancer:
+      platform:
+        type: ""
+    componentRoutes:
+      - name: my-route
+        namespace: openshift-authentication
+        hostname: the-host
+        servingCertKeyPairSecret:
+          name: etcd-client
+      - name: your-route
+        namespace: openshift-authentication
+        hostname: the-host
+        servingCertKeyPairSecret:
+          name: initial-service-account-private-key
+      - name: my-route
+        namespace: different
+        hostname: the-host
+        servingCertKeyPairSecret:
+          name: pull-secret
+  status:
+    componentRoutes:
+    - conditions:
+      - lastTransitionTime: "2024-10-17T23:13:44Z"
+        message: All is well
+        reason: AsExpected
+        status: "False"
+        type: Progressing
+      - lastTransitionTime: "2024-10-17T22:51:50Z"
+        message: All is well
+        reason: AsExpected
+        status: "False"
+        type: Degraded
+      consumingUsers:
+      - system:serviceaccount:oauth-openshift:authentication-operator
+      currentHostnames:
+      - oauth-openshift.apps.ostest.test.metalkube.org
+      defaultHostname: oauth-openshift.apps.ostest.test.metalkube.org
+      name: oauth-openshift
+      namespace: openshift-authentication
+      relatedObjects:
+      - group: route.openshift.io
+        name: oauth-openshift
+        namespace: openshift-authentication
+        resource: routes
+    defaultPlacement: Workers
+kind: IngressList

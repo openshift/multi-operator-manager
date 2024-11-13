@@ -103,8 +103,7 @@ func GetRequiredInputResourcesForResourceList(ctx context.Context, resourceList 
 	for i, currResourceRef := range resourceList.ResourceReferences {
 		currFieldPath := path.Child("resourceReference").Index(i)
 
-		referringGVR := schema.GroupVersionResource{Group: currResourceRef.ReferringResource.Group, Version: currResourceRef.ReferringResource.Version, Resource: currResourceRef.ReferringResource.Resource}
-		referringResourceInstance, err := dynamicClient.Resource(referringGVR).Namespace(currResourceRef.ReferringResource.Namespace).Get(ctx, currResourceRef.ReferringResource.Name, metav1.GetOptions{})
+		referringResourceInstance, err := getExactResource(ctx, dynamicClient, currResourceRef.ReferringResource)
 		if apierrors.IsNotFound(err) {
 			continue
 		}
@@ -112,6 +111,7 @@ func GetRequiredInputResourcesForResourceList(ctx context.Context, resourceList 
 			errs = append(errs, fmt.Errorf("failed reading referringResource [%v] %#v: %w", currFieldPath, currResourceRef.ReferringResource, err))
 			continue
 		}
+		instances.Insert(referringResourceInstance)
 
 		switch {
 		case currResourceRef.ImplicitNamespacedReference != nil:
@@ -121,7 +121,7 @@ func GetRequiredInputResourcesForResourceList(ctx context.Context, resourceList 
 				continue
 			}
 
-			results, err := fieldPathEvaluator(ctx, referringResourceInstance.UnstructuredContent())
+			results, err := fieldPathEvaluator(ctx, referringResourceInstance.Content.UnstructuredContent())
 			if err != nil {
 				errs = append(errs, fmt.Errorf("unexpected error finding value for %v from %v with jsonPath: %w", currFieldPath, "TODO", err))
 				continue
