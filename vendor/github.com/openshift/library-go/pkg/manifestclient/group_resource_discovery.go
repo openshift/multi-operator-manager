@@ -4,10 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"k8s.io/apimachinery/pkg/util/json"
 	"path/filepath"
-	"sigs.k8s.io/yaml"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/util/json"
+	"sigs.k8s.io/yaml"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
@@ -114,6 +115,19 @@ func (mrt *manifestRoundTripper) getLegacyGroupResourceDiscovery(requestInfo *ap
 		for resourceName, apiResource := range apiResourcesForNamespace {
 			apiResources[resourceName] = apiResource
 		}
+
+		// Namespaces are special
+		namespacePath := filepath.Join("namespaces", namespaceDirEntry.Name(), namespaceDirEntry.Name()+".yaml")
+		if namespaceObj, err := readIndividualFile(mrt.sourceFS, namespacePath); err == nil {
+			apiResources["namespaces"] = metav1.APIResource{
+				Name:       "namespaces",
+				Kind:       namespaceObj.GetKind(),
+				Group:      namespaceObj.GroupVersionKind().Group,
+				Version:    namespaceObj.GroupVersionKind().Version,
+				Namespaced: false,
+				Verbs:      []string{"get", "list", "watch"},
+			}
+		}
 	}
 
 	for _, apiResource := range apiResources {
@@ -211,8 +225,14 @@ func getAPIResourcesFromNamespaceDirEntries(dirEntries []fs.DirEntry, sourceFS f
 			return nil, fmt.Errorf("unable to read list file: %w", err)
 		}
 
+		groupVersion := fmt.Sprintf("%s/%s", group, version)
+		if group == "core" {
+			group = ""
+			groupVersion = version
+		}
+
 		for _, obj := range listObj.Items {
-			if obj.GetAPIVersion() != fmt.Sprintf("%s/%s", group, version) {
+			if obj.GetAPIVersion() != groupVersion {
 				continue
 			}
 
