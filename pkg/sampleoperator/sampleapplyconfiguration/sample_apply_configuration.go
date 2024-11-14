@@ -6,7 +6,6 @@ import (
 	"os"
 	"time"
 
-	configv1 "github.com/openshift/api/config/v1"
 	operatorv1 "github.com/openshift/api/operator/v1"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	applyoperatorv1 "github.com/openshift/client-go/operator/applyconfigurations/operator/v1"
@@ -167,35 +166,23 @@ func CreateOperatorStarter(ctx context.Context, exampleOperatorInput *exampleOpe
 
 	// the good example was above, now just add a few resources for us to play with
 
-	ret.ControllerNamedRunOnceFns = append(ret.ControllerNamedRunOnceFns, libraryapplyconfiguration.NewNamedRunOnce(
-		"sample-operator-ingress-creator",
-		func(ctx context.Context) error {
-			exampleOperatorInput.configClient.ConfigV1().Ingresses().Create(ctx, &configv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: "cluster"}}, metav1.CreateOptions{})
-			return nil
-		},
-	))
+	ingressCreatorController := newIngressCreatorController(
+		"sample-operator",
+		exampleOperatorInput.configClient,
+		exampleOperatorInput.eventRecorder,
+	)
+	ret.ControllerNamedRunOnceFns = append(ret.ControllerNamedRunOnceFns,
+		libraryapplyconfiguration.AdaptNamedController(exampleOperatorInput.eventRecorder, ingressCreatorController))
 
-	// this ensures the configmapinformer is requested so that it will start.
-	kubeInformersForNamespaces.ConfigMapLister().ConfigMaps("openshift-authentication")
-	ret.ControllerNamedRunOnceFns = append(ret.ControllerNamedRunOnceFns, libraryapplyconfiguration.NewNamedRunOnce(
-		"sample-operator-failure-generator",
-		func(ctx context.Context) error {
-			exampleOperatorInput.eventRecorder.Event("must", "event")
-			_, err := kubeInformersForNamespaces.ConfigMapLister().ConfigMaps("openshift-authentication").Get("fail-check")
-			if apierrors.IsNotFound(err) {
-				fmt.Printf("forced-failure not required\n")
-				return nil
-			}
-			if err != nil {
-				fmt.Printf("failed to get configmap: %v\n", err)
-				return err
-			}
-			fmt.Printf("forcing an error\n")
-			return fmt.Errorf("fail the process")
-		},
-	))
+	failureGeneratorController := newFailureGeneratorController(
+		"sample-operator",
+		kubeInformersForNamespaces,
+		exampleOperatorInput.eventRecorder,
+	)
+	ret.ControllerNamedRunOnceFns = append(ret.ControllerNamedRunOnceFns,
+		libraryapplyconfiguration.AdaptNamedController(exampleOperatorInput.eventRecorder, failureGeneratorController))
 
-	demoController := NewDemoController(
+	demoController := newDemoController(
 		"sample-operator",
 		exampleOperatorInput.kubeClient,
 		kubeInformersForNamespaces.InformersFor("openshift-authentication").Core().V1().ConfigMaps(),
