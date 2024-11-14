@@ -58,6 +58,11 @@ func TestGetRequiredResourcesFromMustGather(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			expectedPertinentResources, err = unstructuredToMustGatherFormat(expectedPertinentResources)
+			if err != nil {
+				t.Fatal(err)
+			}
+
 			differences := EquivalentResources("pruned", expectedPertinentResources, actualPertinentResources)
 			if len(differences) > 0 {
 				t.Log(strings.Join(differences, "\n"))

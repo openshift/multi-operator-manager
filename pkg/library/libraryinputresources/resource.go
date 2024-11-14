@@ -48,11 +48,11 @@ func LenientResourcesFromDirRecursive(location string) ([]*Resource, error) {
 		if !strings.HasSuffix(currFile.Name(), ".yaml") && !strings.HasSuffix(currFile.Name(), ".json") {
 			return nil
 		}
-		currResource, err := ResourceFromFile(currLocation, location)
+		currResource, err := ResourcesFromFile(currLocation, location)
 		if err != nil {
 			return fmt.Errorf("error deserializing %q: %w", currLocation, err)
 		}
-		currResourceList = append(currResourceList, currResource)
+		currResourceList = append(currResourceList, currResource...)
 
 		return nil
 	})
@@ -63,7 +63,8 @@ func LenientResourcesFromDirRecursive(location string) ([]*Resource, error) {
 	return currResourceList, errors.Join(errs...)
 }
 
-func ResourceFromFile(location, fileTrimPrefix string) (*Resource, error) {
+
+func ResourcesFromFile(location, fileTrimPrefix string) ([]*Resource, error) {
 	content, err := os.ReadFile(location)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read %q: %w", location, err)
@@ -84,11 +85,33 @@ func ResourceFromFile(location, fileTrimPrefix string) (*Resource, error) {
 
 	retFilename := strings.TrimPrefix(location, fileTrimPrefix)
 	retFilename = strings.TrimPrefix(retFilename, "/")
+	retContent := ret.(*unstructured.Unstructured)
 
-	return &Resource{
+	resource := &Resource{
 		Filename: retFilename,
-		Content:  ret.(*unstructured.Unstructured),
-	}, nil
+		Content:  retContent,
+	}
+
+	// Short-circuit if the file contains a single resource
+	if !resource.Content.IsList() {
+		return []*Resource{resource}, nil
+	}
+
+	list, err := resource.Content.ToList()
+	if err != nil {
+		return nil, fmt.Errorf("unable to convert resource content to list: %w", err)
+	}
+
+	// Unpack if the file contains a list of resources
+	resources := make([]*Resource, 0, len(list.Items))
+	for _, item := range list.Items {
+		resources = append(resources, &Resource{
+			Filename: resource.Filename,
+			Content:  &item,
+		})
+	}
+
+	return resources, nil
 }
 
 func IdentifyResource(in *Resource) string {
