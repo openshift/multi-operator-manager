@@ -13,9 +13,11 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/google/go-cmp/cmp"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/client-go/discovery"
 )
 
 // TODO this is a good target to move to library-go so we all agree how to reference these.
@@ -63,6 +65,54 @@ func LenientResourcesFromDirRecursive(location string) ([]*Resource, error) {
 	return currResourceList, errors.Join(errs...)
 }
 
+func EnsureResourceType(discoveryClient discovery.DiscoveryInterface, resources []*Resource) error {
+	var errs []error
+	gvkToAPIResourceList := map[schema.GroupVersionKind]*v1.APIResourceList{}
+	for _, resource := range resources {
+		// Build a cache to avoid repetitive discovery calls
+		gvk := resource.Content.GetObjectKind().GroupVersionKind()
+		if _, ok := gvkToAPIResourceList[gvk]; !ok {
+			list, err := resourceListForGVK(discoveryClient, gvk)
+			if err != nil {
+				errs = append(errs, err)
+				continue
+			}
+			gvkToAPIResourceList[gvk] = list
+		}
+		// Find the GVR for the current GVK
+		gvr, err := findGVR(gvkToAPIResourceList[gvk], gvk)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		resource.ResourceType = *gvr
+	}
+	return errors.Join(errs...)
+}
+
+func findGVR(apiResourceList *v1.APIResourceList, gvk schema.GroupVersionKind) (*schema.GroupVersionResource, error) {
+	if apiResourceList == nil {
+		return nil, fmt.Errorf("apiResourceList cannot be nil")
+	}
+	for _, apiResource := range apiResourceList.APIResources {
+		if apiResource.Kind == gvk.Kind {
+			return &schema.GroupVersionResource{
+				Group:    gvk.Group,
+				Version:  gvk.Version,
+				Resource: apiResource.Name,
+			}, nil
+		}
+	}
+	return nil, fmt.Errorf("failed to find resource for GVK %s", gvk)
+}
+
+func resourceListForGVK(discoveryClient discovery.DiscoveryInterface, gvk schema.GroupVersionKind) (*v1.APIResourceList, error) {
+	apiResourceList, err := discoveryClient.ServerResourcesForGroupVersion(gvk.GroupVersion().String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get api resource list from GVK %s: %w", gvk.String(), err)
+	}
+	return apiResourceList, nil
+}
 
 func ResourcesFromFile(location, fileTrimPrefix string) ([]*Resource, error) {
 	content, err := os.ReadFile(location)

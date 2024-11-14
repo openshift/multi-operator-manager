@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
 
@@ -56,17 +57,28 @@ func GetRequiredInputResourcesFromMustGather(ctx context.Context, inputResources
 }
 
 func NewDynamicClientFromMustGather(mustGatherDir string) (dynamic.Interface, error) {
-	roundTripper := manifestclient.NewRoundTripper(mustGatherDir)
-	httpClient := &http.Client{
-		Transport: roundTripper,
-	}
-
+	httpClient := newHTTPClientFromMustGather(mustGatherDir)
 	dynamicClient, err := dynamic.NewForConfigAndClient(&rest.Config{}, httpClient)
 	if err != nil {
 		return nil, fmt.Errorf("failure creating dynamicClient for NewDynamicClientFromMustGather: %w", err)
 	}
-
 	return dynamicClient, nil
+}
+
+func NewKubeClientFromMustGather(mustGatherDir string) (kubernetes.Interface, error) {
+	httpClient := newHTTPClientFromMustGather(mustGatherDir)
+	kubeClient, err := kubernetes.NewForConfigAndClient(manifestclient.RecommendedRESTConfig(), httpClient)
+	if err != nil {
+		return nil, fmt.Errorf("failure creating kubeClient for NewKubeClientFromMustGather: %w", err)
+	}
+	return kubeClient, err
+}
+
+func newHTTPClientFromMustGather(mustGatherDir string) *http.Client {
+	roundTripper := manifestclient.NewRoundTripper(mustGatherDir)
+	return &http.Client{
+		Transport: roundTripper,
+	}
 }
 
 var builder = gval.Full(jsonpath.Language())

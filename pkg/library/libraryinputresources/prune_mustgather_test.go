@@ -67,6 +67,41 @@ func TestGetRequiredResourcesFromMustGather(t *testing.T) {
 	}
 }
 
+func TestEnsureResourceType(t *testing.T) {
+	content, err := os.ReadDir("test-data")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, currTestDir := range content {
+		testName := currTestDir.Name()
+		t.Run(testName, func(t *testing.T) {
+			mustGatherDirPath := path.Join("test-data", currTestDir.Name(), "input-dir")
+
+			inputDirResources, err := LenientResourcesFromDirRecursive(mustGatherDirPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			kubeClient, err := NewKubeClientFromMustGather(mustGatherDirPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = EnsureResourceType(kubeClient.Discovery(), inputDirResources)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			for _, resource := range inputDirResources {
+				if resource.ResourceType.Resource == "" {
+					t.Errorf("GVR is not properly set: %s\n", IdentifyResource(resource))
+				}
+			}
+		})
+	}
+}
+
 func TestUniqueResourceSet(t *testing.T) {
 	name1 := "audit"
 	name2 := "audit-revision-1"
