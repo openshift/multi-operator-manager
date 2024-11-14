@@ -13,9 +13,11 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/google/go-cmp/cmp"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/client-go/discovery"
 )
 
 // TODO this is a good target to move to library-go so we all agree how to reference these.
@@ -35,9 +37,14 @@ func (r Resource) ID() string {
 }
 
 func LenientResourcesFromDirRecursive(location string) ([]*Resource, error) {
+	discoveryClient, err := NewDiscoveryClientFromMustGather(location)
+	if err != nil {
+		return nil, err
+	}
+
 	currResourceList := []*Resource{}
 	errs := []error{}
-	err := filepath.WalkDir(location, func(currLocation string, currFile fs.DirEntry, err error) error {
+	err = filepath.WalkDir(location, func(currLocation string, currFile fs.DirEntry, err error) error {
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -48,7 +55,7 @@ func LenientResourcesFromDirRecursive(location string) ([]*Resource, error) {
 		if !strings.HasSuffix(currFile.Name(), ".yaml") && !strings.HasSuffix(currFile.Name(), ".json") {
 			return nil
 		}
-		currResource, err := ResourcesFromFile(currLocation, location)
+		currResource, err := ResourcesFromFile(discoveryClient, currLocation, location)
 		if err != nil {
 			return fmt.Errorf("error deserializing %q: %w", currLocation, err)
 		}
@@ -63,8 +70,24 @@ func LenientResourcesFromDirRecursive(location string) ([]*Resource, error) {
 	return currResourceList, errors.Join(errs...)
 }
 
+func findGVR(resources map[schema.GroupVersion]*metav1.APIResourceList, gvk schema.GroupVersionKind) (*schema.GroupVersionResource, error) {
+	apiResourceList, ok := resources[gvk.GroupVersion()]
+	if !ok {
+		return nil, fmt.Errorf("failed to find api resource list for gvk %s", gvk)
+	}
+	for _, apiResource := range apiResourceList.APIResources {
+		if apiResource.Kind == gvk.Kind {
+			return &schema.GroupVersionResource{
+				Group:    gvk.Group,
+				Version:  gvk.Version,
+				Resource: apiResource.Name,
+			}, nil
+		}
+	}
+	return nil, fmt.Errorf("failed to find resource for gvk %s", gvk)
+}
 
-func ResourcesFromFile(location, fileTrimPrefix string) ([]*Resource, error) {
+func ResourcesFromFile(discoveryClient discovery.AggregatedDiscoveryInterface, location, fileTrimPrefix string) ([]*Resource, error) {
 	content, err := os.ReadFile(location)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read %q: %w", location, err)
@@ -87,6 +110,11 @@ func ResourcesFromFile(location, fileTrimPrefix string) ([]*Resource, error) {
 	retFilename = strings.TrimPrefix(retFilename, "/")
 	retContent := ret.(*unstructured.Unstructured)
 
+	_, apiResourceList, _, err := discoveryClient.GroupsAndMaybeResources()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get api resource list: %w", err)
+	}
+
 	resource := &Resource{
 		Filename: retFilename,
 		Content:  retContent,
@@ -94,20 +122,31 @@ func ResourcesFromFile(location, fileTrimPrefix string) ([]*Resource, error) {
 
 	// Short-circuit if the file contains a single resource
 	if !resource.Content.IsList() {
+		gvk := retContent.GroupVersionKind()
+		gvr, err := findGVR(apiResourceList, gvk)
+		if err != nil {
+			return nil, fmt.Errorf("failed to find gvr: %w", err)
+		}
+		resource.ResourceType = *gvr
 		return []*Resource{resource}, nil
 	}
 
+	// Unpack if the file contains a list of resources
 	list, err := resource.Content.ToList()
 	if err != nil {
 		return nil, fmt.Errorf("unable to convert resource content to list: %w", err)
 	}
 
-	// Unpack if the file contains a list of resources
 	resources := make([]*Resource, 0, len(list.Items))
 	for _, item := range list.Items {
+		gvr, err := findGVR(apiResourceList, item.GroupVersionKind())
+		if err != nil {
+			return nil, fmt.Errorf("failed to find gvr: %w", err)
+		}
 		resources = append(resources, &Resource{
-			Filename: resource.Filename,
-			Content:  &item,
+			Filename:     resource.Filename,
+			Content:      &item,
+			ResourceType: *gvr,
 		})
 	}
 
