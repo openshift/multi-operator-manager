@@ -74,7 +74,7 @@ func EnsureResourceType(discoveryClient discovery.AggregatedDiscoveryInterface, 
 		if _, ok := gvkToAPIResourceList[gvk]; !ok {
 			list, err := resourceListForGVK(discoveryClient, gvk)
 			if err != nil {
-				errs = append(errs, err)
+				errs = append(errs, fmt.Errorf("failed listing possible resources for %v: %w", gvk, err))
 				continue
 			}
 			gvkToAPIResourceList[gvk] = list
@@ -82,7 +82,7 @@ func EnsureResourceType(discoveryClient discovery.AggregatedDiscoveryInterface, 
 		// Find the GVR for the current GVK
 		gvr, err := findGVR(gvkToAPIResourceList[gvk], gvk)
 		if err != nil {
-			errs = append(errs, err)
+			errs = append(errs, fmt.Errorf("failed finding resource for %v from %v: %w", gvk, gvkToAPIResourceList[gvk], err))
 			continue
 		}
 		resource.ResourceType = *gvr
