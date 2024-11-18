@@ -3,8 +3,6 @@ data:
   counter: "1"
 kind: ConfigMap
 metadata:
-  annotations:
-    synthetic.mom.openshift.io/controller-instance-name: sample-operator-Demo
   creationTimestamp: null
   name: foo
   namespace: openshift-authentication

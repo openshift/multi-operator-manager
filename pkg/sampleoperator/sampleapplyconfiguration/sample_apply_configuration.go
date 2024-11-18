@@ -100,6 +100,7 @@ func CreateOperatorInputFromMOM(ctx context.Context, momInput libraryapplyconfig
 			Namespace: "openshift-example-operator",
 			Name:      "example-operator",
 		},
+		momInput.Clock,
 	)
 
 	return &exampleOperatorInput{

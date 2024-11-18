@@ -1,0 +1,8 @@
+action: Create
+controllerInstanceName: sample-operator-IngressCreator
+generateName: ""
+mame: cluster
+resourceType:
+  Group: config.openshift.io
+  Resource: ingresses
+  Version: v1
