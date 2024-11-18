@@ -1,17 +1,17 @@
 apiVersion: v1
 count: 1
 eventTime: null
-firstTimestamp: "2024-10-25T20:35:38Z"
+firstTimestamp: "2024-10-14T22:38:20Z"
 involvedObject:
   kind: Deployment
   name: example-operator
   namespace: openshift-example-operator
 kind: Event
-lastTimestamp: "2024-10-25T20:35:38Z"
+lastTimestamp: "2024-10-14T22:38:20Z"
 message: event
 metadata:
   creationTimestamp: null
-  name: example-operator.1801cc75e44e32da
+  name: example-operator.17fe72c59b829800
   namespace: openshift-example-operator
 reason: must
 reportingComponent: ""

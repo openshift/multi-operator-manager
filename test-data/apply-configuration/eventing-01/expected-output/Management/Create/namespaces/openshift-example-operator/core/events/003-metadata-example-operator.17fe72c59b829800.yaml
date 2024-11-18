@@ -1,7 +1,7 @@
 action: Create
 controllerInstanceName: ""
 generateName: ""
-mame: example-operator.1807907bd33633d8
+mame: example-operator.17fe72c59b829800
 namespace: openshift-example-operator
 resourceType:
   Group: ""
