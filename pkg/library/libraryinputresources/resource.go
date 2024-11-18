@@ -65,7 +65,7 @@ func LenientResourcesFromDirRecursive(location string) ([]*Resource, error) {
 	return currResourceList, errors.Join(errs...)
 }
 
-func EnsureResourceType(discoveryClient discovery.DiscoveryInterface, resources []*Resource) error {
+func EnsureResourceType(discoveryClient discovery.AggregatedDiscoveryInterface, resources []*Resource) error {
 	var errs []error
 	gvkToAPIResourceList := map[schema.GroupVersionKind]*v1.APIResourceList{}
 	for _, resource := range resources {
@@ -106,12 +106,17 @@ func findGVR(apiResourceList *v1.APIResourceList, gvk schema.GroupVersionKind) (
 	return nil, fmt.Errorf("failed to find resource for GVK %s", gvk)
 }
 
-func resourceListForGVK(discoveryClient discovery.DiscoveryInterface, gvk schema.GroupVersionKind) (*v1.APIResourceList, error) {
-	apiResourceList, err := discoveryClient.ServerResourcesForGroupVersion(gvk.GroupVersion().String())
+func resourceListForGVK(discoveryClient discovery.AggregatedDiscoveryInterface, gvk schema.GroupVersionKind) (*v1.APIResourceList, error) {
+	_, resources, _, err := discoveryClient.GroupsAndMaybeResources()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get api resource list from GVK %s: %w", gvk.String(), err)
+		return nil, fmt.Errorf("failed to get api group list from GVK %s: %w", gvk.String(), err)
 	}
-	return apiResourceList, nil
+
+	if resourceList, ok := resources[gvk.GroupVersion()]; ok {
+		return resourceList, nil
+	}
+
+	return nil, fmt.Errorf("not found")
 }
 
 func ResourcesFromFile(location, fileTrimPrefix string) ([]*Resource, error) {

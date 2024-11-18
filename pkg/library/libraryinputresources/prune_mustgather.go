@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -72,6 +73,15 @@ func NewKubeClientFromMustGather(mustGatherDir string) (kubernetes.Interface, er
 		return nil, fmt.Errorf("failure creating kubeClient for NewKubeClientFromMustGather: %w", err)
 	}
 	return kubeClient, err
+}
+
+func NewDiscoveryClientFromMustGather(mustGatherDir string) (discovery.AggregatedDiscoveryInterface, error) {
+	httpClient := newHTTPClientFromMustGather(mustGatherDir)
+	discoveryClient, err := discovery.NewDiscoveryClientForConfigAndClient(manifestclient.RecommendedRESTConfig(), httpClient)
+	if err != nil {
+		return nil, fmt.Errorf("failure creating kubeClient for NewKubeClientFromMustGather: %w", err)
+	}
+	return discoveryClient, err
 }
 
 func newHTTPClientFromMustGather(mustGatherDir string) *http.Client {

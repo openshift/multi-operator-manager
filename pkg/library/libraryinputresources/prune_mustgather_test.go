@@ -83,12 +83,12 @@ func TestEnsureResourceType(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			kubeClient, err := NewKubeClientFromMustGather(mustGatherDirPath)
+			discoveryClient, err := NewDiscoveryClientFromMustGather(mustGatherDirPath)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			err = EnsureResourceType(kubeClient.Discovery(), inputDirResources)
+			err = EnsureResourceType(discoveryClient, inputDirResources)
 			if err != nil {
 				t.Fatal(err)
 			}
