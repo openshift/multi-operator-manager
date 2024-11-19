@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 )
@@ -56,17 +57,28 @@ func GetRequiredInputResourcesFromMustGather(ctx context.Context, inputResources
 }
 
 func NewDynamicClientFromMustGather(mustGatherDir string) (dynamic.Interface, error) {
-	roundTripper := manifestclient.NewRoundTripper(mustGatherDir)
-	httpClient := &http.Client{
-		Transport: roundTripper,
-	}
-
+	httpClient := newHTTPClientFromMustGather(mustGatherDir)
 	dynamicClient, err := dynamic.NewForConfigAndClient(&rest.Config{}, httpClient)
 	if err != nil {
 		return nil, fmt.Errorf("failure creating dynamicClient for NewDynamicClientFromMustGather: %w", err)
 	}
-
 	return dynamicClient, nil
+}
+
+func NewDiscoveryClientFromMustGather(mustGatherDir string) (discovery.AggregatedDiscoveryInterface, error) {
+	httpClient := newHTTPClientFromMustGather(mustGatherDir)
+	discoveryClient, err := discovery.NewDiscoveryClientForConfigAndClient(manifestclient.RecommendedRESTConfig(), httpClient)
+	if err != nil {
+		return nil, fmt.Errorf("failure creating discoveryClient for NewDiscoveryClientFromMustGather: %w", err)
+	}
+	return discoveryClient, nil
+}
+
+func newHTTPClientFromMustGather(mustGatherDir string) *http.Client {
+	roundTripper := manifestclient.NewRoundTripper(mustGatherDir)
+	return &http.Client{
+		Transport: roundTripper,
+	}
 }
 
 var builder = gval.Full(jsonpath.Language())
@@ -280,8 +292,9 @@ func unstructuredToMustGatherFormat(in []*Resource) ([]*Resource, error) {
 		listAsUnstructured := &unstructured.Unstructured{Object: list.UnstructuredContent()}
 		resourceType := groupKindToResource[mustGatherKey.gk]
 		ret = append(ret, &Resource{
-			Filename: path.Join(namespacedString, mustGatherKey.namespace, groupString, fmt.Sprintf("%s.yaml", resourceType.Resource)),
-			Content:  listAsUnstructured,
+			Filename:     path.Join(namespacedString, mustGatherKey.namespace, groupString, fmt.Sprintf("%s.yaml", resourceType.Resource)),
+			Content:      listAsUnstructured,
+			ResourceType: resourceType,
 		})
 	}
 
