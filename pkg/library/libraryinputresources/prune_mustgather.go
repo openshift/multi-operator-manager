@@ -280,8 +280,9 @@ func unstructuredToMustGatherFormat(in []*Resource) ([]*Resource, error) {
 		listAsUnstructured := &unstructured.Unstructured{Object: list.UnstructuredContent()}
 		resourceType := groupKindToResource[mustGatherKey.gk]
 		ret = append(ret, &Resource{
-			Filename: path.Join(namespacedString, mustGatherKey.namespace, groupString, fmt.Sprintf("%s.yaml", resourceType.Resource)),
-			Content:  listAsUnstructured,
+			Filename:     path.Join(namespacedString, mustGatherKey.namespace, groupString, fmt.Sprintf("%s.yaml", resourceType.Resource)),
+			Content:      listAsUnstructured,
+			ResourceType: resourceType,
 		})
 	}
 
