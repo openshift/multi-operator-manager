@@ -61,6 +61,11 @@ func (o *applyConfigurationOptions) Run(ctx context.Context) error {
 		errs = append(errs, err)
 	}
 
+	// ensure there were not duplicate mutations
+	if err := ValidateNoDuplicateMutations(filteredResult); err != nil {
+		errs = append(errs, err)
+	}
+
 	if err := WriteApplyConfiguration(filteredResult, o.outputDirectory); err != nil {
 		errs = append(errs, err)
 	}
