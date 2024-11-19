@@ -2,27 +2,6 @@
 apiVersion: v1
 items:
   - apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      annotations:
-        kubernetes.io/description: The install-config content used to create the cluster.  The
-          cluster configuration may have evolved since installation, so check cluster
-          configuration resources directly if you are interested in the current cluster
-          state.
-      creationTimestamp: "2024-07-10T22:52:15Z"
-      name: cluster-config-v1
-      namespace: kube-system
-      resourceVersion: "427"
-      uid: c67488c5-a5a8-43c2-9242-e7f307342b47
-  - apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      creationTimestamp: "2024-07-10T22:51:23Z"
-      name: extension-apiserver-authentication
-      namespace: kube-system
-      resourceVersion: "14452"
-      uid: aa94c43a-b400-4597-970f-8eb101b26f57
-  - apiVersion: v1
     data:
       since: "2024-07-10"
     kind: ConfigMap
@@ -36,33 +15,12 @@ items:
     kind: ConfigMap
     metadata:
       annotations:
-        kubernetes.io/description: Contains a CA bundle that can be used to verify the
-          kube-apiserver when using internal endpoints such as the internal service
-          IP or kubernetes.default.svc. No other usage is guaranteed across distributions
-          of Kubernetes clusters.
-      creationTimestamp: "2024-07-10T22:52:16Z"
-      name: kube-root-ca.crt
-      namespace: kube-system
-      resourceVersion: "24136"
-      uid: c1bff5ac-f98b-477c-82c9-aeece459e765
-  - apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      annotations:
         service.beta.openshift.io/inject-cabundle: "true"
       creationTimestamp: "2024-07-10T22:52:16Z"
       name: openshift-service-ca.crt
       namespace: kube-system
       resourceVersion: "7334"
       uid: d38d5838-77ef-4b9c-bef6-268c55082479
-  - apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      creationTimestamp: "2024-07-10T22:52:23Z"
-      name: root-ca
-      namespace: kube-system
-      resourceVersion: "552"
-      uid: 8840bcbf-c96b-48f7-a166-217c60a92f8b
 kind: ConfigMapList
 metadata:
   resourceVersion: "25620"

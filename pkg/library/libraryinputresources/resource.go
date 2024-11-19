@@ -85,9 +85,21 @@ func ResourceFromFile(location, fileTrimPrefix string) (*Resource, error) {
 	retFilename := strings.TrimPrefix(location, fileTrimPrefix)
 	retFilename = strings.TrimPrefix(retFilename, "/")
 
+	// If the file represents a list, derive the resource name from the file name.
+	// Otherwise, if it represents a single resource, use the parent directory name instead.
+	resourceContent := ret.(*unstructured.Unstructured)
+	resourceName := filepath.Base(filepath.Dir(location))
+	if resourceContent.IsList() {
+		resourceName = strings.TrimSuffix(filepath.Base(location), ".yaml")
+	}
 	return &Resource{
+		ResourceType: schema.GroupVersionResource{
+			Group:    ret.GetObjectKind().GroupVersionKind().Group,
+			Version:  ret.GetObjectKind().GroupVersionKind().Version,
+			Resource: resourceName,
+		},
 		Filename: retFilename,
-		Content:  ret.(*unstructured.Unstructured),
+		Content:  resourceContent,
 	}, nil
 }
 
@@ -187,4 +199,28 @@ func (u *UniqueResourceSet) Insert(resources ...*Resource) {
 
 func (u *UniqueResourceSet) List() []*Resource {
 	return u.resources
+}
+
+// DifferenceOfResources returns a slice of Resource objects that are in lhses but not in rhses.
+// Resources are compared by their IDs, rather than a full object comparison,
+// to account for potentially incomplete data in objects.
+// For example:
+// lhses = {a1, a2, a3}
+// rhses = {a1, a2, a4, a5}
+// DifferenceOfResources(lhses, rhses) = {a3}
+func DifferenceOfResources(lhses, rhses []*Resource) []*Resource {
+	ret := []*Resource{}
+	for i := range lhses {
+		found := false
+		for j := range rhses {
+			if lhses[i].ID() == rhses[j].ID() {
+				found = true
+				break
+			}
+		}
+		if !found {
+			ret = append(ret, lhses[i])
+		}
+	}
+	return ret
 }

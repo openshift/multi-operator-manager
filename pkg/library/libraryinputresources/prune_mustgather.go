@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/PaesslerAG/gval"
 	"github.com/PaesslerAG/jsonpath"
@@ -50,6 +51,40 @@ func GetRequiredInputResourcesFromMustGather(ctx context.Context, inputResources
 	pertinentUnstructureds, err := GetRequiredInputResourcesForResourceList(ctx, inputResources.ApplyConfigurationResources, dynamicClient)
 	if err != nil {
 		return nil, err
+	}
+
+	inputDirResources, err := LenientResourcesFromDirRecursive(mustGatherDir)
+	if err != nil {
+		return nil, err
+	}
+
+	var flattenedInputDirResources []*Resource
+	for _, inputDirResource := range inputDirResources {
+		if !inputDirResource.Content.IsList() {
+			flattenedInputDirResources = append(flattenedInputDirResources, inputDirResource)
+			continue
+		}
+		list, err := inputDirResource.Content.ToList()
+		if err != nil {
+			return nil, err
+		}
+		for _, item := range list.Items {
+			singleResource := &Resource{
+				Filename:     inputDirResource.Filename,
+				ResourceType: inputDirResource.ResourceType,
+				Content:      &item,
+			}
+			flattenedInputDirResources = append(flattenedInputDirResources, singleResource)
+		}
+	}
+
+	differences := DifferenceOfResources(flattenedInputDirResources, pertinentUnstructureds)
+	if len(differences) > 0 {
+		var names []string
+		for _, r := range differences {
+			names = append(names, IdentifyResource(r))
+		}
+		return nil, fmt.Errorf("input-dir contains %d resources not present in input-resources: %v", len(differences), strings.Join(names, ", "))
 	}
 
 	return unstructuredToMustGatherFormat(pertinentUnstructureds)
