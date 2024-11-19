@@ -1,5 +1,8 @@
 binaryName: ./sample-operator
-testName: basic call
+testName: test forced error
+controllers:
+  - "sample-operator-IngressCreator"
+  - "sample-operator-FailureGenerator"
 description: >
   Test the ability to have apply-configuration return non-zero, but still have the output checked.
 testType: ApplyConfiguration

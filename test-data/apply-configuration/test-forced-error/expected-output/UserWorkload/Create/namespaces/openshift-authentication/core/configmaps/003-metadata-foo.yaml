@@ -1,9 +1,0 @@
-action: Create
-controllerInstanceName: sample-operator-Demo
-generateName: ""
-mame: foo
-namespace: openshift-authentication
-resourceType:
-  Group: ""
-  Resource: configmaps
-  Version: v1
