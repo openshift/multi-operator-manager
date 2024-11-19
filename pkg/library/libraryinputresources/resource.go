@@ -75,16 +75,29 @@ func findGVR(resources map[schema.GroupVersion]*metav1.APIResourceList, gvk sche
 	if !ok {
 		return nil, fmt.Errorf("failed to find api resource list for gvk %s", gvk)
 	}
+
+	var matches []*schema.GroupVersionResource
 	for _, apiResource := range apiResourceList.APIResources {
+		if strings.Contains(apiResource.Name, "/") {
+			// Skip subresources
+			continue
+		}
 		if apiResource.Kind == gvk.Kind {
-			return &schema.GroupVersionResource{
+			matches = append(matches, &schema.GroupVersionResource{
 				Group:    gvk.Group,
 				Version:  gvk.Version,
 				Resource: apiResource.Name,
-			}, nil
+			})
 		}
 	}
-	return nil, fmt.Errorf("failed to find resource for gvk %s", gvk)
+	switch len(matches) {
+	case 1:
+		return matches[0], nil
+	case 0:
+		return nil, fmt.Errorf("failed to find resource for gvk %s", gvk)
+	default:
+		return nil, fmt.Errorf("multiple resources found for gvk %v", matches)
+	}
 }
 
 func ResourcesFromFile(discoveryClient discovery.AggregatedDiscoveryInterface, location, fileTrimPrefix string) ([]*Resource, error) {
