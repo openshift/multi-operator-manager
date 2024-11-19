@@ -11,7 +11,7 @@ lastTimestamp: "2024-10-14T22:38:20Z"
 message: event
 metadata:
   creationTimestamp: null
-  name: example-operator.17fe72c59b829800
+  name: example-operator.17fe72c59b829800.5bfc8f45
   namespace: openshift-example-operator
 reason: must
 reportingComponent: ""
