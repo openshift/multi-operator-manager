@@ -35,10 +35,16 @@ type TestApplyConfigurationOptions struct {
 
 	OutputDirectory string
 
-	PreservePolicy string
+	PreservePolicy PreservePolicy
 
 	Streams genericiooptions.IOStreams
 }
+
+type PreservePolicy string
+
+var (
+	PreservePolicyReplaceExpectedOutput PreservePolicy = "ReplaceExpectedOutput"
+)
 
 type TestOptions struct {
 	Description TestDescription
@@ -77,6 +83,21 @@ func (o *TestApplyConfigurationOptions) Run(ctx context.Context) error {
 		}
 	}()
 
+	if err := os.RemoveAll(o.OutputDirectory); err != nil && !os.IsNotExist(err) {
+		retErr := fmt.Errorf("unable to remove output directory %q:%v", o.OutputDirectory, err)
+		junit.TestCases = append(junit.TestCases, &junitapi.JUnitTestCase{
+			Name: "remove output directory",
+			FailureOutput: &junitapi.FailureOutput{
+				Message: retErr.Error(),
+				Output:  retErr.Error(),
+			},
+		})
+	} else {
+		junit.TestCases = append(junit.TestCases, &junitapi.JUnitTestCase{
+			Name: "remove output directory",
+		})
+	}
+
 	if err := os.MkdirAll(o.OutputDirectory, 0755); err != nil && !os.IsExist(err) {
 		retErr := fmt.Errorf("unable to create output directory %q:%v", o.OutputDirectory, err)
 		junit.TestCases = append(junit.TestCases, &junitapi.JUnitTestCase{
@@ -99,7 +120,7 @@ func (o *TestApplyConfigurationOptions) Run(ctx context.Context) error {
 			// break the loop and report as much as we can.
 			break
 		}
-		currJunit := test.runTest(ctx)
+		currJunit := test.runTest(ctx, o.PreservePolicy)
 		junit.TestCases = append(junit.TestCases, currJunit)
 		if currJunit.FailureOutput != nil {
 			failedTestsToOutput[currJunit.Name] = fmt.Sprintf(
@@ -143,36 +164,51 @@ func (o *TestApplyConfigurationOptions) Run(ctx context.Context) error {
 	return nil
 }
 
-func (test *TestOptions) runTest(ctx context.Context) *junitapi.JUnitTestCase {
-	junitTestName := fmt.Sprintf("%v [Binary:%q] [Controllers:%q] [Directory:%q]", test.Description.TestName, test.Description.BinaryName, test.Description.Controllers, test.TestDirectory)
+func (o *TestOptions) runTest(ctx context.Context, preservePolicy PreservePolicy) *junitapi.JUnitTestCase {
+	junitTestName := fmt.Sprintf("%v [Binary:%q] [Controllers:%q] [Directory:%q]", o.Description.TestName, o.Description.BinaryName, o.Description.Controllers, o.TestDirectory)
 	currJunit := &junitapi.JUnitTestCase{
 		Name: junitTestName,
 	}
 	startTime := now()
 
-	if err := os.MkdirAll(test.OutputDirectory, 0755); err != nil && !os.IsExist(err) {
+	if preservePolicy == PreservePolicyReplaceExpectedOutput {
+		if err := os.RemoveAll(o.OutputDirectory); err != nil && !os.IsNotExist(err) {
+			currJunit.FailureOutput = &junitapi.FailureOutput{
+				Message: fmt.Sprintf("unable to delete output directory %q:\n%v\n", o.OutputDirectory, err),
+				Output:  fmt.Sprintf("unable to delete output directory %q:\n%v\n", o.OutputDirectory, err),
+			}
+			return currJunit
+		}
+	}
+	if err := os.MkdirAll(o.OutputDirectory, 0755); err != nil {
 		currJunit.FailureOutput = &junitapi.FailureOutput{
-			Message: fmt.Sprintf("unable to create output directory %q:\n%v\n", test.OutputDirectory, err),
-			Output:  fmt.Sprintf("unable to create output directory %q:\n%v\n", test.OutputDirectory, err),
+			Message: fmt.Sprintf("unable to create output directory %q:\n%v\n", o.OutputDirectory, err),
+			Output:  fmt.Sprintf("unable to create output directory %q:\n%v\n", o.OutputDirectory, err),
 		}
 		return currJunit
 	}
 
-	inputDir := filepath.Join(test.TestDirectory, "input-dir")
+	inputDir := filepath.Join(o.TestDirectory, "input-dir")
 	args := applyconfiguration.ApplyConfigurationFlagValues{
 		InputDirectory:  inputDir,
-		OutputDirectory: test.OutputDirectory,
-		Now:             test.Description.Now.Time,
-		Controllers:     test.Description.Controllers,
+		OutputDirectory: o.OutputDirectory,
+		Now:             o.Description.Now.Time,
+		Controllers:     o.Description.Controllers,
 	}
-	actualResult, execErr := applyconfiguration.ExecApplyConfiguration(ctx, test.Description.BinaryName, args)
+	actualResult, execErr := applyconfiguration.ExecApplyConfiguration(ctx, o.Description.BinaryName, args)
 	endTime := now()
 	currJunit.Duration = endTime.Sub(startTime).Round(1 * time.Second).Seconds()
+
+	if preservePolicy == PreservePolicyReplaceExpectedOutput {
+		os.Remove(filepath.Join(o.OutputDirectory, "stderr.log"))
+		os.Remove(filepath.Join(o.OutputDirectory, "stdout.log"))
+		return currJunit
+	}
 
 	switch {
 	case execErr == nil && actualResult != nil:
 		// this was successful
-		if test.Description.DesiredError == NonZeroReturn {
+		if o.Description.DesiredError == NonZeroReturn {
 			currJunit.FailureOutput = &junitapi.FailureOutput{
 				Message: "test requires non-zero exit code from apply-configuration",
 				Output:  "test requires non-zero exit code from apply-configuration",
@@ -192,7 +228,7 @@ func (test *TestOptions) runTest(ctx context.Context) *junitapi.JUnitTestCase {
 		currJunit.SystemErr = actualResult.Stderr()
 
 		// if we aren't expecting non-zero returns, mark the test case to fail, but continue to check the output
-		if test.Description.DesiredError != NonZeroReturn {
+		if o.Description.DesiredError != NonZeroReturn {
 			currJunit.FailureOutput = &junitapi.FailureOutput{
 				Message: fmt.Sprintf("%v\n%v", execErr, currJunit.SystemErr),
 				Output:  fmt.Sprintf("ERROR:%v\n\nSTDERR:\n%s\n\nSTDOUT:\n:%s\n", execErr, currJunit.SystemErr, currJunit.SystemOut),
@@ -213,7 +249,7 @@ func (test *TestOptions) runTest(ctx context.Context) *junitapi.JUnitTestCase {
 
 	case execErr != nil && actualResult == nil:
 		// if we aren't expecting non-zero returns, then fail
-		if test.Description.DesiredError != NonZeroReturn {
+		if o.Description.DesiredError != NonZeroReturn {
 			currJunit.FailureOutput = &junitapi.FailureOutput{
 				Message: fmt.Sprintf("%v\n%v", execErr, currJunit.SystemErr),
 				Output:  fmt.Sprintf("ERROR:%v\n\nSTDERR:\n%s\n\nSTDOUT:\n:%s\n", execErr, currJunit.SystemErr, currJunit.SystemOut),
@@ -235,7 +271,7 @@ func (test *TestOptions) runTest(ctx context.Context) *junitapi.JUnitTestCase {
 		return currJunit
 	}
 
-	expectedOutputDir := filepath.Join(test.TestDirectory, "expected-output")
+	expectedOutputDir := filepath.Join(o.TestDirectory, "expected-output")
 	expectedResult, execErr := libraryapplyconfiguration.NewApplyConfigurationResultFromDirectory(os.DirFS(expectedOutputDir), expectedOutputDir, nil)
 	if execErr != nil {
 		currJunit.FailureOutput = &junitapi.FailureOutput{
@@ -260,7 +296,7 @@ var (
 	requiredTestContent = sets.New("test.yaml", "input-dir", "expected-output")
 )
 
-func ReadPotentialTestDir(path string) (*TestOptions, bool, error) {
+func ReadPotentialTestDir(path string, replaceExpectedOutput bool) (*TestOptions, bool, error) {
 	actualContent, err := os.ReadDir(path)
 	if err != nil {
 		return nil, false, err
@@ -278,6 +314,10 @@ func ReadPotentialTestDir(path string) (*TestOptions, bool, error) {
 
 	missingContent := sets.Set[string]{}
 	for _, requiredName := range requiredTestContent.UnsortedList() {
+		if replaceExpectedOutput && requiredName == "expected-output" {
+			continue
+		}
+
 		found := false
 		for _, curr := range actualContent {
 			if curr.Name() == requiredName {
@@ -311,13 +351,15 @@ func ReadPotentialTestDir(path string) (*TestOptions, bool, error) {
 		return nil, true, fmt.Errorf("input-dir must be a directory")
 	}
 
-	outputDir := filepath.Join(path, "expected-output")
-	outputDirInfo, err := os.Lstat(outputDir)
-	if err != nil {
-		return nil, true, fmt.Errorf("unable to read inputDir: %w", err)
-	}
-	if !outputDirInfo.IsDir() {
-		return nil, true, fmt.Errorf("input-dir must be a directory")
+	if !replaceExpectedOutput {
+		outputDir := filepath.Join(path, "expected-output")
+		outputDirInfo, err := os.Lstat(outputDir)
+		if err != nil {
+			return nil, true, fmt.Errorf("unable to read expected-output: %w", err)
+		}
+		if !outputDirInfo.IsDir() {
+			return nil, true, fmt.Errorf("expected-output must be a directory")
+		}
 	}
 
 	return &TestOptions{

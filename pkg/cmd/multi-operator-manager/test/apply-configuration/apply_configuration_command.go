@@ -28,6 +28,8 @@ type TestApplyConfigurationFlags struct {
 
 	PreservePolicy string
 
+	ReplaceExpectedOutput bool
+
 	Streams genericiooptions.IOStreams
 }
 
@@ -73,6 +75,7 @@ func (f *TestApplyConfigurationFlags) BindFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&f.TestDirectory, "test-dir", f.TestDirectory, "The directory where the tests are stored (recursive).")
 	flags.StringVar(&f.OutputDirectory, "output-dir", f.OutputDirectory, "The directory where the output is stored.")
 	flags.StringVar(&f.PreservePolicy, "preserve-policy", f.PreservePolicy, "")
+	flags.BoolVar(&f.ReplaceExpectedOutput, "replace-expected-output", f.ReplaceExpectedOutput, "Delete the previous --test-dir/<test>/expected-output and replace it with current values.")
 }
 
 func (f *TestApplyConfigurationFlags) Validate() error {
@@ -82,6 +85,7 @@ func (f *TestApplyConfigurationFlags) Validate() error {
 	if len(f.OutputDirectory) == 0 {
 		return fmt.Errorf("--output-dir is required")
 	}
+
 	return nil
 }
 
@@ -97,7 +101,7 @@ func (f *TestApplyConfigurationFlags) ToOptions(ctx context.Context) (*testapply
 			return nil
 		}
 
-		currTest, _, err := testapplyconfiguration.ReadPotentialTestDir(path)
+		currTest, _, err := testapplyconfiguration.ReadPotentialTestDir(path, f.ReplaceExpectedOutput)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("%q: %w", path, err))
 			return nil
@@ -112,11 +116,16 @@ func (f *TestApplyConfigurationFlags) ToOptions(ctx context.Context) (*testapply
 			return nil
 		}
 
-		outputDir := f.OutputDirectory
-		if currentPathRelativeToInitialPath, err := filepath.Rel(f.TestDirectory, path); err == nil {
-			outputDir = filepath.Join(outputDir, currentPathRelativeToInitialPath)
+		if !f.ReplaceExpectedOutput {
+			outputDir := f.OutputDirectory
+			if currentPathRelativeToInitialPath, err := filepath.Rel(f.TestDirectory, path); err == nil {
+				outputDir = filepath.Join(outputDir, currentPathRelativeToInitialPath)
+			}
+			currTest.OutputDirectory = outputDir
+		} else {
+			currTest.OutputDirectory = filepath.Join(path, "expected-output")
 		}
-		currTest.OutputDirectory = outputDir
+
 		tests = append(tests, *currTest)
 
 		return nil
@@ -128,9 +137,14 @@ func (f *TestApplyConfigurationFlags) ToOptions(ctx context.Context) (*testapply
 		return nil, errors.Join(errs...)
 	}
 
+	preservePolicy := testapplyconfiguration.PreservePolicy(f.PreservePolicy)
+	if f.ReplaceExpectedOutput {
+		preservePolicy = testapplyconfiguration.PreservePolicyReplaceExpectedOutput
+	}
+
 	return &testapplyconfiguration.TestApplyConfigurationOptions{
 		Tests:           tests,
-		PreservePolicy:  f.PreservePolicy,
+		PreservePolicy:  preservePolicy,
 		OutputDirectory: f.OutputDirectory,
 		Streams:         f.Streams,
 	}, nil
