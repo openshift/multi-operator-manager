@@ -17,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/client-go/discovery"
 )
 
 // TODO this is a good target to move to library-go so we all agree how to reference these.
@@ -42,6 +41,11 @@ func LenientResourcesFromDirRecursive(location string) ([]*Resource, error) {
 		return nil, err
 	}
 
+	_, apiResourceList, _, err := discoveryClient.GroupsAndMaybeResources()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get api resource list: %w", err)
+	}
+
 	currResourceList := []*Resource{}
 	errs := []error{}
 	err = filepath.WalkDir(location, func(currLocation string, currFile fs.DirEntry, err error) error {
@@ -55,7 +59,7 @@ func LenientResourcesFromDirRecursive(location string) ([]*Resource, error) {
 		if !strings.HasSuffix(currFile.Name(), ".yaml") && !strings.HasSuffix(currFile.Name(), ".json") {
 			return nil
 		}
-		currResource, err := ResourcesFromFile(discoveryClient, currLocation, location)
+		currResource, err := ResourcesFromFile(apiResourceList, currLocation, location)
 		if err != nil {
 			return fmt.Errorf("error deserializing %q: %w", currLocation, err)
 		}
@@ -100,7 +104,7 @@ func findGVR(resources map[schema.GroupVersion]*metav1.APIResourceList, gvk sche
 	}
 }
 
-func ResourcesFromFile(discoveryClient discovery.AggregatedDiscoveryInterface, location, fileTrimPrefix string) ([]*Resource, error) {
+func ResourcesFromFile(apiResourceList map[schema.GroupVersion]*metav1.APIResourceList, location, fileTrimPrefix string) ([]*Resource, error) {
 	content, err := os.ReadFile(location)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read %q: %w", location, err)
@@ -122,11 +126,6 @@ func ResourcesFromFile(discoveryClient discovery.AggregatedDiscoveryInterface, l
 	retFilename := strings.TrimPrefix(location, fileTrimPrefix)
 	retFilename = strings.TrimPrefix(retFilename, "/")
 	retContent := ret.(*unstructured.Unstructured)
-
-	_, apiResourceList, _, err := discoveryClient.GroupsAndMaybeResources()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get api resource list: %w", err)
-	}
 
 	resource := &Resource{
 		Filename: retFilename,
