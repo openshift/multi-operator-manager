@@ -192,6 +192,14 @@ func CreateOperatorStarter(ctx context.Context, exampleOperatorInput *exampleOpe
 	ret.ControllerNamedRunOnceFns = append(ret.ControllerNamedRunOnceFns,
 		libraryapplyconfiguration.AdaptNamedController(exampleOperatorInput.eventRecorder, demoController))
 
+	doubleCreationController := newDoubleCreationController(
+		"sample-operator",
+		exampleOperatorInput.kubeClient,
+		exampleOperatorInput.eventRecorder,
+	)
+	ret.ControllerNamedRunOnceFns = append(ret.ControllerNamedRunOnceFns,
+		libraryapplyconfiguration.AdaptNamedController(exampleOperatorInput.eventRecorder, doubleCreationController))
+
 	return ret, nil
 }
 

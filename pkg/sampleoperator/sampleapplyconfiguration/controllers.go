@@ -21,6 +21,31 @@ import (
 	"k8s.io/klog/v2"
 )
 
+func newDoubleCreationController(
+	instanceName string,
+	kubeClient kubernetes.Interface,
+	eventRecorder events.Recorder) factory.Controller {
+
+	syncFn := func(ctx context.Context, _ factory.SyncContext) error {
+		configMap := makeConfigMap("foo")
+		_, err := kubeClient.CoreV1().ConfigMaps("openshift-authentication").Create(ctx, configMap, metav1.CreateOptions{})
+		if err != nil {
+			return err
+		}
+		_, err = kubeClient.CoreV1().ConfigMaps("openshift-authentication").Create(ctx, configMap, metav1.CreateOptions{})
+		return err
+	}
+
+	return factory.New().
+		WithSync(syncFn).
+		WithControllerInstanceName(factory.ControllerInstanceName(instanceName, "DoubleCreation")).
+		ToController(
+			"DoubleCreation",
+			eventRecorder.WithComponentSuffix(factory.ControllerInstanceName(instanceName, "DoubleCreation")),
+		)
+	return nil
+}
+
 func newFailureGeneratorController(
 	instanceName string,
 	kubeInformersForNamespaces v1helpers.KubeInformersForNamespaces,
