@@ -1,0 +1,33 @@
+---
+apiVersion: operator.openshift.io/v1
+items:
+- apiVersion: operator.openshift.io/v1
+  kind: Authentication
+  metadata:
+    creationTimestamp: "2023-12-06T09:18:01Z"
+    generation: 1
+    name: cluster
+    resourceVersion: "1276"
+    uid: 28ab65e3-c0c5-45ac-8df3-079fd1e35f20
+  status:
+    conditions:
+      - lastTransitionTime: "2024-10-24T13:03:29Z"
+        status: "False"
+        type: ManagementStateDegraded
+      - lastTransitionTime: "2024-10-24T13:20:09Z"
+        status: "True"
+        type: ReadyIngressNodesAvailable
+      - lastTransitionTime: "2024-10-24T13:03:29Z"
+        reason: AsExpected
+        status: "False"
+        type: WebhookAuthenticatorCertApprover_OpenShiftAuthenticatorDegraded
+      - lastTransitionTime: "2024-10-24T13:03:29Z"
+        reason: NoUnsupportedConfigOverrides
+        status: "True"
+        type: UnsupportedConfigOverridesUpgradeable
+      - lastTransitionTime: "2024-10-24T13:03:47Z"
+        status: "False"
+        type: RevisionControllerDegraded
+kind: AuthenticationList
+metadata:
+  resourceVersion: "47578"

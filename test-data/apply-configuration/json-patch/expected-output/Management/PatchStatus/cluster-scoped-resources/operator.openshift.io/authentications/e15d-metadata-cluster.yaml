@@ -1,0 +1,9 @@
+action: PatchStatus
+controllerInstanceName: sample-operator-RemoveStaleConditions
+generateName: ""
+mame: cluster
+patchType: application/json-patch+json
+resourceType:
+  Group: operator.openshift.io
+  Resource: authentications
+  Version: v1

@@ -5,5 +5,7 @@ controllerResults:
   status: Skipped
 - controllerName: sample-operator-IngressCreator
   status: Succeeded
+- controllerName: sample-operator-RemoveStaleConditions
+  status: Skipped
 - controllerName: sample-operator-example-ResourceSync
   status: Skipped
