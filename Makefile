@@ -47,3 +47,8 @@ test-operator-integration: build
 	hack/test-operator-integration.sh
 
 .PHONY: test-operator-integration
+
+update-test-operator-integration: build
+	REPLACE_TEST_OUTPUT=true hack/test-operator-integration.sh
+
+.PHONY: update-test-operator-integration
