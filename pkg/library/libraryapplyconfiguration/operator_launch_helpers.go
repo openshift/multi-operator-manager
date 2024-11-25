@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"reflect"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -18,7 +19,7 @@ import (
 )
 
 type OperatorStarter interface {
-	RunOnce(ctx context.Context) error
+	RunOnce(ctx context.Context) (*ApplyConfigurationRunResult, error)
 	Start(ctx context.Context) error
 }
 
@@ -41,7 +42,7 @@ var (
 	_ SimplifiedInformerFactory = generatedNamespacedInformerFactory{}
 )
 
-func (a SimpleOperatorStarter) RunOnce(ctx context.Context) error {
+func (a SimpleOperatorStarter) RunOnce(ctx context.Context) (*ApplyConfigurationRunResult, error) {
 	for _, informer := range a.Informers {
 		informer.Start(ctx)
 	}
@@ -61,29 +62,53 @@ func (a SimpleOperatorStarter) RunOnce(ctx context.Context) error {
 		knownControllersSet.Insert(controllerRunner.ControllerInstanceName())
 	}
 	if len(duplicateControllerNames) > 0 {
-		return fmt.Errorf("the following controllers were requested to run multiple times: %v", duplicateControllerNames)
+		return nil, fmt.Errorf("the following controllers were requested to run multiple times: %v", duplicateControllerNames)
 	}
 
 	if errs := validateControllersFromFlags(knownControllersSet, a.Controllers); len(errs) > 0 {
-		return errors.Join(errs...)
+		return nil, errors.Join(errs...)
 	}
+
+	allControllersRunResult := &ApplyConfigurationRunResult{}
 
 	shuffleNamedRunOnce(a.ControllerNamedRunOnceFns)
 	errs := []error{}
 	for _, controllerRunner := range a.ControllerNamedRunOnceFns {
 		func() {
+			currControllerResult := ControllerRunResult{
+				ControllerName: controllerRunner.ControllerInstanceName(),
+				Status:         ControllerRunStatusUnknown,
+			}
+			defer func() {
+				if r := recover(); r != nil {
+					currControllerResult.Status = ControllerRunStatusPanicked
+					currControllerResult.PanicStack = fmt.Sprintf("%s\n%s", r, string(debug.Stack()))
+				}
+				allControllersRunResult.ControllerResults = append(allControllersRunResult.ControllerResults, currControllerResult)
+			}()
+
 			if !isControllerEnabled(controllerRunner.ControllerInstanceName(), a.Controllers) {
+				currControllerResult.Status = ControllerRunStatusSkipped
 				return
 			}
 			localCtx, localCancel := context.WithTimeout(ctx, 1*time.Second)
 			defer localCancel()
+
 			localCtx = manifestclient.WithControllerInstanceNameFromContext(localCtx, controllerRunner.ControllerInstanceName())
 			if err := controllerRunner.RunOnce(localCtx); err != nil {
+				currControllerResult.Status = ControllerRunStatusFailed
+				currControllerResult.Errors = append(currControllerResult.Errors, ErrorDetails{Message: err.Error()})
 				errs = append(errs, fmt.Errorf("controller %q failed: %w", controllerRunner.ControllerInstanceName(), err))
+			} else {
+				currControllerResult.Status = ControllerRunStatusSucceeded
 			}
 		}()
 	}
-	return errors.Join(errs...)
+
+	// canonicalize
+	CanonicalizeApplyConfigurationRunResult(allControllersRunResult)
+
+	return allControllersRunResult, errors.Join(errs...)
 }
 
 func (a SimpleOperatorStarter) Start(ctx context.Context) error {

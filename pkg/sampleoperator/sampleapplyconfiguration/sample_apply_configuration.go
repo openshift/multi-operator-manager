@@ -27,21 +27,22 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func SampleRunApplyConfiguration(ctx context.Context, input libraryapplyconfiguration.ApplyConfigurationInput) (libraryapplyconfiguration.AllDesiredMutationsGetter, error) {
+func SampleRunApplyConfiguration(ctx context.Context, input libraryapplyconfiguration.ApplyConfigurationInput) (*libraryapplyconfiguration.ApplyConfigurationRunResult, libraryapplyconfiguration.AllDesiredMutationsGetter, error) {
 	authenticationOperatorInput, err := CreateOperatorInputFromMOM(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("unable to configure operator input: %w", err)
+		return nil, nil, fmt.Errorf("unable to configure operator input: %w", err)
 	}
 	operatorStarter, err := CreateOperatorStarter(ctx, authenticationOperatorInput)
 	if err != nil {
-		return nil, fmt.Errorf("unable to configure operators: %w", err)
+		return nil, nil, fmt.Errorf("unable to configure operators: %w", err)
 	}
 	var operatorRunError error
-	if err := operatorStarter.RunOnce(ctx); err != nil {
+	controllerResult, err := operatorStarter.RunOnce(ctx)
+	if err != nil {
 		operatorRunError = fmt.Errorf("unable to run operators: %w", err)
 	}
 
-	return libraryapplyconfiguration.NewApplyConfigurationFromClient(input.MutationTrackingClient.GetMutations()), operatorRunError
+	return controllerResult, libraryapplyconfiguration.NewApplyConfigurationFromClient(input.MutationTrackingClient.GetMutations()), operatorRunError
 }
 
 type exampleOperatorInput struct {
