@@ -1,0 +1,9 @@
+controllerResults:
+- controllerName: sample-operator-Demo
+  status: Skipped
+- controllerName: sample-operator-FailureGenerator
+  status: Skipped
+- controllerName: sample-operator-IngressCreator
+  status: Succeeded
+- controllerName: sample-operator-example-ResourceSync
+  status: Skipped
