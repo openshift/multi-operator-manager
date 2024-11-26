@@ -19,7 +19,7 @@ import (
 )
 
 type OperatorStarter interface {
-	RunOnce(ctx context.Context) (*ApplyConfigurationRunResult, error)
+	RunOnce(ctx context.Context, input ApplyConfigurationInput) (*ApplyConfigurationRunResult, AllDesiredMutationsGetter, error)
 	Start(ctx context.Context) error
 }
 
@@ -28,11 +28,6 @@ type SimpleOperatorStarter struct {
 	ControllerNamedRunOnceFns []NamedRunOnce
 	// ControllerRunFns is useful during a transition to coalesce the operator launching flow.
 	ControllerRunFns []RunFunc
-	// Controllers hold an optional list of controller names to run.
-	// '*' means "all controllersFromFlags are enabled by default"
-	// 'foo' means "enable 'foo'"
-	// '-foo' means "disable 'foo'"
-	Controllers []string
 }
 
 var (
@@ -42,7 +37,7 @@ var (
 	_ SimplifiedInformerFactory = generatedNamespacedInformerFactory{}
 )
 
-func (a SimpleOperatorStarter) RunOnce(ctx context.Context) (*ApplyConfigurationRunResult, error) {
+func (a SimpleOperatorStarter) RunOnce(ctx context.Context, input ApplyConfigurationInput) (*ApplyConfigurationRunResult, AllDesiredMutationsGetter, error) {
 	for _, informer := range a.Informers {
 		informer.Start(ctx)
 	}
@@ -62,11 +57,11 @@ func (a SimpleOperatorStarter) RunOnce(ctx context.Context) (*ApplyConfiguration
 		knownControllersSet.Insert(controllerRunner.ControllerInstanceName())
 	}
 	if len(duplicateControllerNames) > 0 {
-		return nil, fmt.Errorf("the following controllers were requested to run multiple times: %v", duplicateControllerNames)
+		return nil, nil, fmt.Errorf("the following controllers were requested to run multiple times: %v", duplicateControllerNames)
 	}
 
-	if errs := validateControllersFromFlags(knownControllersSet, a.Controllers); len(errs) > 0 {
-		return nil, errors.Join(errs...)
+	if errs := validateControllersFromFlags(knownControllersSet, input.Controllers); len(errs) > 0 {
+		return nil, nil, errors.Join(errs...)
 	}
 
 	allControllersRunResult := &ApplyConfigurationRunResult{}
@@ -87,7 +82,7 @@ func (a SimpleOperatorStarter) RunOnce(ctx context.Context) (*ApplyConfiguration
 				allControllersRunResult.ControllerResults = append(allControllersRunResult.ControllerResults, currControllerResult)
 			}()
 
-			if !isControllerEnabled(controllerRunner.ControllerInstanceName(), a.Controllers) {
+			if !isControllerEnabled(controllerRunner.ControllerInstanceName(), input.Controllers) {
 				currControllerResult.Status = ControllerRunStatusSkipped
 				return
 			}
@@ -108,7 +103,7 @@ func (a SimpleOperatorStarter) RunOnce(ctx context.Context) (*ApplyConfiguration
 	// canonicalize
 	CanonicalizeApplyConfigurationRunResult(allControllersRunResult)
 
-	return allControllersRunResult, errors.Join(errs...)
+	return allControllersRunResult, NewApplyConfigurationFromClient(input.MutationTrackingClient.GetMutations()), errors.Join(errs...)
 }
 
 func (a SimpleOperatorStarter) Start(ctx context.Context) error {
