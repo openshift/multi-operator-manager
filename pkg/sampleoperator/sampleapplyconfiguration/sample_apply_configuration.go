@@ -36,13 +36,7 @@ func SampleRunApplyConfiguration(ctx context.Context, input libraryapplyconfigur
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to configure operators: %w", err)
 	}
-	var operatorRunError error
-	controllerResult, err := operatorStarter.RunOnce(ctx)
-	if err != nil {
-		operatorRunError = fmt.Errorf("unable to run operators: %w", err)
-	}
-
-	return controllerResult, libraryapplyconfiguration.NewApplyConfigurationFromClient(input.MutationTrackingClient.GetMutations()), operatorRunError
+	return operatorStarter.RunOnce(ctx, input)
 }
 
 type exampleOperatorInput struct {
@@ -53,10 +47,6 @@ type exampleOperatorInput struct {
 	eventRecorder         events.Recorder
 
 	informers []libraryapplyconfiguration.SimplifiedInformerFactory
-
-	// controllers holds an optional list of controller names to run.
-	// By default, all controllers are run.
-	controllers []string
 }
 
 const componentName = "cluster-example-operator"
@@ -113,14 +103,12 @@ func CreateOperatorInputFromMOM(ctx context.Context, momInput libraryapplyconfig
 		informers: []libraryapplyconfiguration.SimplifiedInformerFactory{
 			libraryapplyconfiguration.DynamicInformerFactoryAdapter(dynamicInformers), // we don't share the dynamic informers, but we only want to start when requested
 		},
-		controllers: momInput.Controllers,
 	}, nil
 }
 
 func CreateOperatorStarter(ctx context.Context, exampleOperatorInput *exampleOperatorInput) (libraryapplyconfiguration.OperatorStarter, error) {
 	ret := &libraryapplyconfiguration.SimpleOperatorStarter{
-		Informers:   append([]libraryapplyconfiguration.SimplifiedInformerFactory{}, exampleOperatorInput.informers...),
-		Controllers: exampleOperatorInput.controllers,
+		Informers: append([]libraryapplyconfiguration.SimplifiedInformerFactory{}, exampleOperatorInput.informers...),
 	}
 
 	// create informers. This one is common for control plane operators.
