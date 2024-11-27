@@ -1,0 +1,9 @@
+binaryName: ./sample-operator
+testName: test double creation
+controllers:
+  - "sample-operator-DoubleCreation"
+description: >
+  Test the detection of the same resource being created multiple times.
+testType: ApplyConfiguration
+now: 2024-10-14T22:38:20Z
+desiredError: NonZeroReturn

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/openshift/multi-operator-manager/pkg/library/libraryoutputresources"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/openshift/library-go/pkg/manifestclient"
@@ -78,6 +79,42 @@ func ValidateAllDesiredMutationsGetter(allDesiredMutationsGetter AllDesiredMutat
 	}
 
 	return errors.Join(errs...)
+}
+
+func ValidateNoDuplicateMutations(allDesiredMutationsGetter AllDesiredMutationsGetter) error {
+	var errs []error
+	for _, clusterType := range sets.List(AllClusterTypes) {
+		mutationsForClusterType := allDesiredMutationsGetter.MutationsForClusterType(clusterType)
+		errs = append(errs, validateNoDuplicateMutationsForActions(mutationsForClusterType.Requests().RequestsForAction(manifestclient.ActionCreate), manifestclient.ActionCreate)...)
+		// TODO: add Update, Deletion
+	}
+	return errors.Join(errs...)
+}
+
+func validateNoDuplicateMutationsForActions(requests []manifestclient.SerializedRequestish, action manifestclient.Action) []error {
+	seenIDs := map[string]int{}
+	for _, request := range requests {
+		// TODO: skip if GenerateNam set ?
+		id := request.GetSerializedRequest().StringID()
+		idCounter := seenIDs[id]
+		idCounter++
+		seenIDs[id] = idCounter
+	}
+
+	sortedIDs := make([]string, 0, len(seenIDs))
+	for id := range seenIDs {
+		sortedIDs = append(sortedIDs, id)
+	}
+	sort.Strings(sortedIDs)
+
+	var errs []error
+	for _, id := range sortedIDs {
+		idCounter := seenIDs[id]
+		if idCounter > 1 {
+			errs = append(errs, fmt.Errorf("detected multiple mutations for resource: %s, action: %s, mutations: %d", id, action, idCounter))
+		}
+	}
+	return errs
 }
 
 func WriteApplyConfiguration(desiredApplyConfiguration AllDesiredMutationsGetter, outputDirectory string) error {
