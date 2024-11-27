@@ -1,0 +1,9 @@
+controllerResults:
+- controllerName: sample-operator-Demo
+  status: Succeeded
+- controllerName: sample-operator-FailureGenerator
+  status: Succeeded
+- controllerName: sample-operator-IngressCreator
+  status: Succeeded
+- controllerName: sample-operator-example-ResourceSync
+  status: Succeeded
