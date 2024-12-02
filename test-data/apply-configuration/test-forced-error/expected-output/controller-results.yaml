@@ -7,5 +7,7 @@ controllerResults:
   status: Failed
 - controllerName: sample-operator-IngressCreator
   status: Succeeded
+- controllerName: sample-operator-RemoveStaleConditions
+  status: Succeeded
 - controllerName: sample-operator-example-ResourceSync
   status: Succeeded

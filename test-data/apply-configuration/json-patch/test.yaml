@@ -1,0 +1,6 @@
+binaryName: ./sample-operator
+testName: test json patch
+description: >
+  Test if stale conditions will be removed using json patch.
+testType: ApplyConfiguration
+now: 2024-10-14T22:38:20Z

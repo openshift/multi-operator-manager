@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/library-go/pkg/operator/events"
 	"github.com/openshift/library-go/pkg/operator/genericoperatorclient"
 	"github.com/openshift/library-go/pkg/operator/resourcesynccontroller"
+	"github.com/openshift/library-go/pkg/operator/staleconditions"
 	"github.com/openshift/library-go/pkg/operator/status"
 	"github.com/openshift/library-go/pkg/operator/v1helpers"
 	"github.com/openshift/multi-operator-manager/pkg/library/libraryapplyconfiguration"
@@ -180,6 +181,15 @@ func CreateOperatorStarter(ctx context.Context, exampleOperatorInput *exampleOpe
 	)
 	ret.ControllerNamedRunOnceFns = append(ret.ControllerNamedRunOnceFns,
 		libraryapplyconfiguration.AdaptNamedController(exampleOperatorInput.eventRecorder, demoController))
+
+	staleConditionsController := staleconditions.NewRemoveStaleConditionsController(
+		"sample-operator",
+		[]string{"WebhookAuthenticatorCertApprover_OpenShiftAuthenticatorDegraded"},
+		exampleOperatorInput.exampleOperatorClient,
+		exampleOperatorInput.eventRecorder,
+	)
+	ret.ControllerNamedRunOnceFns = append(ret.ControllerNamedRunOnceFns,
+		libraryapplyconfiguration.AdaptNamedController(exampleOperatorInput.eventRecorder, staleConditionsController))
 
 	return ret, nil
 }
