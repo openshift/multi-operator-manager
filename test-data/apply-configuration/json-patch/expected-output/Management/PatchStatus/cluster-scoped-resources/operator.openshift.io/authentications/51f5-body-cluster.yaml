@@ -1,0 +1,5 @@
+- op: test
+  path: /status/conditions/2/type
+  value: WebhookAuthenticatorCertApprover_OpenShiftAuthenticatorDegraded
+- op: remove
+  path: /status/conditions/2
