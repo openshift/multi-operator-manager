@@ -194,7 +194,7 @@ func (o *TestOptions) runTest(ctx context.Context, preservePolicy PreservePolicy
 		InputDirectory:    inputDir,
 		OutputDirectory:   o.OutputDirectory,
 		Now:               o.Description.Now.Time,
-		DeterministicMode: o.Description.DeterministicMode,
+		DeterministicMode: true, // Always deterministic in tests
 		Controllers:       o.Description.Controllers,
 	}
 	actualResult, execErr := applyconfiguration.ExecApplyConfiguration(ctx, o.Description.BinaryName, options)

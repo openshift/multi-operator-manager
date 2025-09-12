@@ -17,8 +17,6 @@ type TestDescription struct {
 	// Controllers hold an optional list of controller names to run.
 	// By default, all controllers are run.
 	Controllers []string `json:"controllers,omitempty"`
-	// DeterministicMode determines whether controllers should generate deterministic output.
-	DeterministicMode bool `json:"deterministicMode"`
 }
 
 type TestType string
