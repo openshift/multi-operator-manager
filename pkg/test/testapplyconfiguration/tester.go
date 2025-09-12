@@ -8,9 +8,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sigs.k8s.io/yaml"
 	"strings"
 	"time"
+
+	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/library-go/test/library/junitapi"
 	"github.com/openshift/multi-operator-manager/pkg/applyconfiguration"
@@ -190,10 +191,11 @@ func (o *TestOptions) runTest(ctx context.Context, preservePolicy PreservePolicy
 
 	inputDir := filepath.Join(o.TestDirectory, "input-dir")
 	options := applyconfiguration.ApplyConfigurationOptions{
-		InputDirectory:  inputDir,
-		OutputDirectory: o.OutputDirectory,
-		Now:             o.Description.Now.Time,
-		Controllers:     o.Description.Controllers,
+		InputDirectory:    inputDir,
+		OutputDirectory:   o.OutputDirectory,
+		Now:               o.Description.Now.Time,
+		DeterministicMode: o.Description.DeterministicMode,
+		Controllers:       o.Description.Controllers,
 	}
 	actualResult, execErr := applyconfiguration.ExecApplyConfiguration(ctx, o.Description.BinaryName, options)
 	endTime := now()

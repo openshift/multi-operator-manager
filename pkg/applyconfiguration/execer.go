@@ -4,20 +4,22 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/openshift/multi-operator-manager/pkg/library/libraryapplyconfiguration"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/openshift/multi-operator-manager/pkg/library/libraryapplyconfiguration"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 )
 
 type ApplyConfigurationOptions struct {
-	InputDirectory  string
-	OutputDirectory string
-	Now             time.Time
-	Controllers     []string
+	InputDirectory    string
+	OutputDirectory   string
+	Now               time.Time
+	DeterministicMode bool
+	Controllers       []string
 
 	// Env specifies the environment of the process.
 	// Each entry is of the form "key=value".
@@ -49,6 +51,9 @@ func ExecApplyConfiguration(ctx context.Context, binaryPath string, options Appl
 	}
 	if len(options.Controllers) > 0 {
 		args = append(args, "--controllers", strings.Join(options.Controllers, ","))
+	}
+	if options.DeterministicMode {
+		args = append(args, "--deterministic-mode")
 	}
 
 	// TODO prove that the timeout works if the process captures sig-int

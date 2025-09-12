@@ -26,6 +26,10 @@ type ApplyConfigurationInput struct {
 	// the actual time.  This is another aspect that makes unit and integration testing easier.
 	Clock clock.Clock
 
+	// DeterministicMode determines whether controllers should try to generate deterministic
+	// output. This is mostly useful for unit and integration testing.
+	DeterministicMode bool
+
 	// Streams is for I/O.  The StdIn will usually be nil'd out.
 	Streams genericiooptions.IOStreams
 
@@ -58,6 +62,8 @@ type applyConfigurationFlags struct {
 
 	now time.Time
 
+	deterministicMode bool
+
 	streams genericiooptions.IOStreams
 }
 
@@ -66,6 +72,7 @@ func newApplyConfigurationFlags(streams genericiooptions.IOStreams, applyConfigu
 		applyConfigurationFn: applyConfigurationFn,
 		outputResourcesFn:    outputResourcesFn,
 		now:                  time.Now(),
+		deterministicMode:    false,
 		streams:              streams,
 	}
 }
@@ -111,6 +118,7 @@ func (f *applyConfigurationFlags) BindFlags(flags *pflag.FlagSet) {
 	flags.StringSliceVar(&f.controllers, "controllers", []string{"*"}, "A list of controllers to enable. '*' enables all controllers, 'foo' enables the controller named 'foo', '-foo' disables the controller named 'foo'. Default: `*`")
 	nowFlag := flagtypes.NewTimeValue(f.now, &f.now, []string{time.RFC3339})
 	flags.Var(nowFlag, "now", "The time to use time.Now during this execution.")
+	flags.BoolVar(&f.deterministicMode, "deterministic-mode", false, "Instruct controllers to produce consistent output.")
 }
 
 func (f *applyConfigurationFlags) Validate() error {
@@ -131,6 +139,7 @@ func (f *applyConfigurationFlags) ToOptions(ctx context.Context) (*applyConfigur
 	input := ApplyConfigurationInput{
 		MutationTrackingClient: momClient,
 		Clock:                  clocktesting.NewFakeClock(f.now),
+		DeterministicMode:      f.deterministicMode,
 		Controllers:            f.controllers,
 		Streams:                f.streams,
 	}
