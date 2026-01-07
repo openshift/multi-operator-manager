@@ -7,10 +7,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/diff"
 	"sigs.k8s.io/yaml"
 )
 
@@ -182,7 +183,7 @@ func TestUniqueResourceSet(t *testing.T) {
 				t.Errorf("expected %d items, got %d", len(tc.expected), len(result))
 			}
 			if !equality.Semantic.DeepEqual(result, tc.expected) {
-				t.Error(diff.ObjectDiff(tc.expected, result))
+				t.Error(cmp.Diff(tc.expected, result))
 			}
 		})
 	}
