@@ -1,8 +1,0 @@
-apiVersion: v1
-data:
-  counter: "1"
-kind: ConfigMap
-metadata:
-  creationTimestamp: null
-  name: foo
-  namespace: openshift-authentication
