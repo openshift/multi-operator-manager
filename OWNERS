@@ -1,11 +1,5 @@
 approvers:
-- bertinatto
-- deads2k
-- p0lyn0mial
-- benluddy
+- control-plane-approvers
 
 reviewers:
-- bertinatto
-- deads2k
-- p0lyn0mial
-- benluddy
+  - control-plane-approvers
